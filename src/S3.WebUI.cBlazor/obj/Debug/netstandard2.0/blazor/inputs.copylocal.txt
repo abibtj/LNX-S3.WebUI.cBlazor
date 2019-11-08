@@ -1,0 +1,48 @@
+C:\Users\Abeeb\.nuget\packages\blazor.flexgrid\0.8.8\lib\netstandard2.0\Blazor.FlexGrid.dll
+C:\Users\Abeeb\.nuget\packages\blazored.localstorage\2.1.1\lib\netstandard2.0\Blazored.LocalStorage.dll
+C:\Users\Abeeb\.nuget\packages\fluentvalidation\8.5.0\lib\netstandard2.0\FluentValidation.dll
+C:\Users\Abeeb\.nuget\packages\matblazor\1.10.1\lib\netstandard2.0\MatBlazor.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.aspnetcore.authorization\3.1.0-preview1.19508.20\lib\netstandard2.0\Microsoft.AspNetCore.Authorization.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.aspnetcore.blazor\3.1.0-preview1.19508.20\lib\netstandard2.0\Microsoft.AspNetCore.Blazor.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.aspnetcore.blazor.httpclient\3.1.0-preview1.19508.20\lib\netstandard2.0\Microsoft.AspNetCore.Blazor.HttpClient.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.aspnetcore.components\3.1.0-preview1.19508.20\lib\netstandard2.0\Microsoft.AspNetCore.Components.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.aspnetcore.components.forms\3.1.0-preview1.19508.20\lib\netstandard2.0\Microsoft.AspNetCore.Components.Forms.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.aspnetcore.components.web\3.1.0-preview1.19508.20\lib\netstandard2.0\Microsoft.AspNetCore.Components.Web.dll
+C:\Program Files\dotnet\sdk\NuGetFallbackFolder\microsoft.aspnetcore.http.abstractions\2.2.0\lib\netstandard2.0\Microsoft.AspNetCore.Http.Abstractions.dll
+C:\Program Files\dotnet\sdk\NuGetFallbackFolder\microsoft.aspnetcore.http.extensions\2.2.0\lib\netstandard2.0\Microsoft.AspNetCore.Http.Extensions.dll
+C:\Program Files\dotnet\sdk\NuGetFallbackFolder\microsoft.aspnetcore.http.features\2.2.0\lib\netstandard2.0\Microsoft.AspNetCore.Http.Features.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.aspnetcore.metadata\3.1.0-preview1.19508.20\lib\netstandard2.0\Microsoft.AspNetCore.Metadata.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.bcl.asyncinterfaces\1.1.0-preview1.19504.10\lib\netstandard2.0\Microsoft.Bcl.AsyncInterfaces.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.configuration\3.0.0\lib\netstandard2.0\Microsoft.Extensions.Configuration.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.configuration.abstractions\3.0.0\lib\netstandard2.0\Microsoft.Extensions.Configuration.Abstractions.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.configuration.binder\3.0.0-preview9.19423.4\lib\netstandard2.0\Microsoft.Extensions.Configuration.Binder.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.configuration.fileextensions\3.0.0\lib\netstandard2.0\Microsoft.Extensions.Configuration.FileExtensions.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.configuration.json\3.0.0\lib\netstandard2.0\Microsoft.Extensions.Configuration.Json.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.dependencyinjection\3.1.0-preview1.19506.1\lib\netstandard2.0\Microsoft.Extensions.DependencyInjection.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.dependencyinjection.abstractions\3.1.0-preview1.19506.1\lib\netstandard2.0\Microsoft.Extensions.DependencyInjection.Abstractions.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.fileproviders.abstractions\3.0.0\lib\netstandard2.0\Microsoft.Extensions.FileProviders.Abstractions.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.fileproviders.physical\3.0.0\lib\netstandard2.0\Microsoft.Extensions.FileProviders.Physical.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.filesystemglobbing\3.0.0\lib\netstandard2.0\Microsoft.Extensions.FileSystemGlobbing.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.logging\3.0.0-preview9.19423.4\lib\netstandard2.0\Microsoft.Extensions.Logging.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.logging.abstractions\3.1.0-preview1.19506.1\lib\netstandard2.0\Microsoft.Extensions.Logging.Abstractions.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.logging.configuration\3.0.0-preview9.19423.4\lib\netstandard2.0\Microsoft.Extensions.Logging.Configuration.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.logging.console\3.0.0-preview9.19423.4\lib\netstandard2.0\Microsoft.Extensions.Logging.Console.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.options\3.1.0-preview1.19506.1\lib\netstandard2.0\Microsoft.Extensions.Options.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.options.configurationextensions\3.0.0-preview9.19423.4\lib\netstandard2.0\Microsoft.Extensions.Options.ConfigurationExtensions.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.extensions.primitives\3.1.0-preview1.19506.1\lib\netstandard2.0\Microsoft.Extensions.Primitives.dll
+C:\Users\Abeeb\.nuget\packages\microsoft.jsinterop\3.1.0-preview1.19506.1\lib\netstandard2.0\Microsoft.JSInterop.dll
+C:\Program Files\dotnet\sdk\NuGetFallbackFolder\microsoft.net.http.headers\2.2.0\lib\netstandard2.0\Microsoft.Net.Http.Headers.dll
+C:\Users\Abeeb\.nuget\packages\mono.webassembly.interop\3.1.0-preview1.19506.1\lib\netstandard2.0\Mono.WebAssembly.Interop.dll
+C:\Users\Abeeb\.nuget\packages\peterlesliemorris.blazor.fluentvalidation\1.0.0\lib\netstandard2.0\PeterLeslieMorris.Blazor.FluentValidation.dll
+C:\Users\Abeeb\.nuget\packages\peterlesliemorris.blazor.validation\1.0.0\lib\netstandard2.0\PeterLeslieMorris.Blazor.Validation.dll
+C:\Program Files\dotnet\sdk\NuGetFallbackFolder\system.buffers\4.5.0\lib\netstandard2.0\System.Buffers.dll
+C:\Users\Abeeb\.nuget\packages\system.componentmodel.annotations\4.7.0-preview1.19504.10\lib\netstandard2.0\System.ComponentModel.Annotations.dll
+C:\Users\Abeeb\.nuget\packages\system.linq.dynamic.core\1.0.12\lib\netstandard2.0\System.Linq.Dynamic.Core.dll
+C:\Users\Abeeb\.nuget\packages\system.memory\4.5.3\lib\netstandard2.0\System.Memory.dll
+C:\Program Files\dotnet\sdk\NuGetFallbackFolder\system.numerics.vectors\4.5.0\lib\netstandard2.0\System.Numerics.Vectors.dll
+C:\Program Files\dotnet\sdk\NuGetFallbackFolder\system.reflection.emit\4.3.0\lib\netstandard1.3\System.Reflection.Emit.dll
+C:\Program Files\dotnet\sdk\NuGetFallbackFolder\system.reflection.emit.ilgeneration\4.3.0\lib\netstandard1.3\System.Reflection.Emit.ILGeneration.dll
+C:\Users\Abeeb\.nuget\packages\system.runtime.compilerservices.unsafe\4.7.0-preview1.19504.10\lib\netstandard2.0\System.Runtime.CompilerServices.Unsafe.dll
+C:\Users\Abeeb\.nuget\packages\system.text.encodings.web\4.7.0-preview1.19504.10\lib\netstandard2.0\System.Text.Encodings.Web.dll
+C:\Users\Abeeb\.nuget\packages\system.text.json\4.7.0-preview1.19504.10\lib\netstandard2.0\System.Text.Json.dll
+C:\Users\Abeeb\.nuget\packages\system.threading.tasks.extensions\4.5.2\lib\netstandard2.0\System.Threading.Tasks.Extensions.dll

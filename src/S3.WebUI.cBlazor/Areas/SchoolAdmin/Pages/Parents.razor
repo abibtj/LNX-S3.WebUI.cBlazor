@@ -1,0 +1,628 @@
+﻿@page "/schadm/parents"
+@inject IParentService ParentService
+@inject ISchoolService SchoolService
+@inject IStudentService StudentService
+@inject IMiscellaneousService MiscellaneousService
+@inject IIdentityService IdentityService
+@inject ILogger<Parents> Logger
+@inject AppUser AppUser
+@inject IMatToaster Toaster
+
+<MatH5>Parents</MatH5>
+<br />
+
+@if (!(parents is null))
+{
+    @if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin) // School admin can add new parents
+    {
+        <MatButton OnClick="ShowAddParentDialogAsync" Icon="person_add">Add Parent</MatButton>
+    }
+    <MatButton OnClick="LoadAsync" Icon="refresh">Refresh</MatButton>
+
+    <img class="@(busy? "show-gif": "hide-gif")" src="/images/loading.gif" />
+
+    <MatTable Items="@parents" Striped="true">
+        <MatTableHeader>
+            <th>First Name</th>
+            <th>Middle Name</th>
+            <th>Last Name</th>
+            <th></th>
+        </MatTableHeader>
+        <MatTableRow>
+            <td>@context.FirstName</td>
+            <td>@context.MiddleName</td>
+            <td>@context.LastName</td>
+            <td>
+                @*@if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin) // School admin can add new parents
+                    {*@
+                <MatIconButton OnClick="@(() => ShowSignUpDialog(context.Id))" Icon="accessibility" Attributes="@(new Dictionary<string, object>() { { "title", "Manage Sign Up" } })"></MatIconButton>
+                <MatIconButton OnClick="@(() => ShowUpdateParentDialogAsync(context.Id))" Icon="edit" Attributes="@(new Dictionary<string, object>() { { "title", "Edit Parent's Information" } })"></MatIconButton>
+                <MatIconButton OnClick="@(() => ShowDeleteParentDialog(context.Id))" Icon="delete_forever" Attributes="@(new Dictionary<string, object>() { { "title", "Delete Parent" } })"></MatIconButton>
+                @*}*@
+            </td>
+        </MatTableRow>
+    </MatTable>
+}
+else if (loadFailed)
+{
+    <p><em>@errorMessage</em></p>
+    Toaster.Add(errorMessage, MatToastType.Danger, errorTitle, "error");
+}
+else
+{
+    <MatProgressBar Indeterminate="true"></MatProgressBar>
+}
+
+@*Add / Update*@
+@if (!(parents is null) && (mode == Mode.Add || mode == Mode.Update))
+{
+    <EditForm Model="parent" OnValidSubmit="Add_UpdateAsync">
+        <PeterLeslieMorris.Blazor.Validation.Validate />
+        <MatDialog IsOpen="@addUpdateDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+
+            <MatDialogTitle>@add_UpdateTitle</MatDialogTitle>
+
+            <MatDialogContent>
+                <ValidationSummary />
+
+                @*Parent properties*@
+                <div>
+                    <PersonDetailsComponent Person="parent"></PersonDetailsComponent>
+                </div>
+
+                <br />
+                @*Students or Children or Wards*@
+                <StudentVisibilityComponent Mode="mode" IsAdmin="true" Parent="parent" ParentStudents="parentStudents"></StudentVisibilityComponent>
+
+                <br />
+                @*Address*@
+
+                <MatAccordion>
+                    <MatExpansionPanel ExpandedChanged="ToggleAddressVisibilityAsync">
+                        <MatExpansionPanelSummary>
+                            <MatExpansionPanelHeader>Address</MatExpansionPanelHeader>
+                        </MatExpansionPanelSummary>
+                        <MatExpansionPanelDetails>
+                            <div class="row">
+                                <div class="form-group">
+                                    <MatButton Type="button" OnClick="Add_RemoveAddress">@add_RemoveAddressButtonLabel</MatButton>
+                                </div>
+                            </div>
+
+                            @if (!(parent.Address is null))
+                            {
+                                <AddressComponent Address="parent.Address"></AddressComponent>
+                            }
+
+                        </MatExpansionPanelDetails>
+                    </MatExpansionPanel>
+                </MatAccordion>
+
+            </MatDialogContent>
+
+            <MatDialogActions>
+                <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+                <MatButton Type="submit"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>@add_UpdateButtonLabel</MatButton>
+            </MatDialogActions>
+
+        </MatDialog>
+    </EditForm>
+}
+
+@*Sign Up, Remove Sign Up, Update User Roles*@
+@if (!(signUp is null) && !(parent is null) && (mode == Mode.SignUp))
+{
+    <EditForm Model="signUp" OnValidSubmit="@SignUpAsync">
+        <PeterLeslieMorris.Blazor.Validation.Validate />
+        <MatDialog IsOpen="@signUpDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+
+            <MatDialogTitle>Sign Up</MatDialogTitle>
+
+            <MatDialogContent>
+                <br />
+                <p>Manage <strong>@parent.FullName</strong>'s sign up.</p>
+
+                <ValidationSummary />
+
+                @*Sign Up Details*@
+
+                <div>
+                    @if (!parent.IsSignedUp)
+                    {
+                        <p><MatTextField OnFocusOut="CheckUsernameAvailabilityAsync" @bind-Value="signUp.Username" Label="Username" HelperText="@usernameAvailabilityText" HelperTextPersistent="true" InputClass="@(usernameAvailable? "green-font": "red-font")" Icon="person" IconTrailing="true" FullWidth="true" Required="true"></MatTextField></p>
+
+                        <p><MatTextField @bind-Value="signUp.Password" Label="Password" Type="@(showPassword ? "text" : "password")" IconOnClick="ToggleShowPassword" Icon="@(showPassword ? "radio_button_unchecked" : "remove_red_eye")" IconTrailing="true" FullWidth="true" Required="true"></MatTextField></p>
+
+                        <p><MatTextField @bind-Value="signUp.ConfirmPassword" Label="Confirm Password" Type="@(showPassword ? "text" : "password")" IconOnClick="ToggleShowPassword" Icon="@(showPassword ? "radio_button_unchecked" : "remove_red_eye")" IconTrailing="true" FullWidth="true" Required="true"></MatTextField></p>
+                    }
+                    else
+                    {
+                        <p>
+                            This user is already signed up.
+                            <MatButton Type="button" OnClick="RemoveSignUpAsync"><span class="@(busyRemovingSignUp? "oi oi-loop-circular spinning" : "")"></span>Remove Sign Up</MatButton>
+                        </p>
+                    }
+
+                </div>
+
+                <br />
+                @*Role*@
+                <MatAccordion>
+                    <MatExpansionPanel @bind-Expanded="rolePanelExpanded">
+                        <MatExpansionPanelSummary>
+                            <MatExpansionPanelHeader>Roles</MatExpansionPanelHeader>
+                        </MatExpansionPanelSummary>
+                        <MatExpansionPanelDetails>
+
+                            <div class="form-group">
+
+                                <MatSelect Label="Role*" ValueChanged="AddRole" Required="true" Enhanced="true">
+                                    @if (!(assignableRoles is null))
+                                    {
+                                        @foreach (var role in assignableRoles)
+                                        {
+                                            <MatOption Value="@role">@role</MatOption>
+                                        }
+                                    }
+                                </MatSelect>
+                            </div>
+                            <br />
+
+                            <table class="table table-striped">
+                                <tbody>
+                                    @foreach (var role in parentRoles)
+                                    {
+                                        <tr>
+                                            <td>@(parentRoles.IndexOf(role) + 1)</td>
+                                            <td>@role</td>
+                                            <td>
+                                                <MatIconButton OnClick="@(() => RemoveRole(@role))" Icon="delete_forever" Attributes="@(new Dictionary<string, object>() { { "title", "Remove Role" }, { "type", "button" } })"></MatIconButton>
+                                            </td>
+                                        </tr>
+                                    }
+                                </tbody>
+                            </table>
+                        </MatExpansionPanelDetails>
+                    </MatExpansionPanel>
+                </MatAccordion>
+
+            </MatDialogContent>
+
+            <MatDialogActions>
+                <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+                @if (!parent.IsSignedUp)
+                {
+                    <MatButton Type="submit"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Sign Up</MatButton>
+                }
+                else
+                {
+                    <MatButton Type="button" OnClick="ShowResetPasswordDialog">Reset Password</MatButton>
+                    @*<MatButton Type="submit"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Update Roles</MatButton>*@
+                }
+            </MatDialogActions>
+
+        </MatDialog>
+    </EditForm>
+}
+
+@*Reset Password*@
+@if (!(resetPassword is null) && !(parent is null) && (mode == Mode.ResetPassword))
+{
+    <EditForm Model="resetPassword" OnValidSubmit="@ResetPasswordAsync">
+        <PeterLeslieMorris.Blazor.Validation.Validate />
+        <MatDialog IsOpen="@resetPasswordDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+
+            <MatDialogTitle>Reset Password</MatDialogTitle>
+
+            <MatDialogContent>
+                <br />
+                <p>Reset <strong>@parent.FullName</strong>'s password to default.</p>
+
+                <ValidationSummary />
+
+                @*New default password*@
+                <div>
+                    <p><MatTextField @bind-Value="resetPassword.Password" Label="Password" Type="@(showPassword ? "text" : "password")" IconOnClick="ToggleShowPassword" Icon="@(showPassword ? "radio_button_unchecked" : "remove_red_eye")" IconTrailing="true" FullWidth="true" Required="true"></MatTextField></p>
+
+                    <p><MatTextField @bind-Value="resetPassword.ConfirmPassword" Label="Confirm Password" Type="@(showPassword ? "text" : "password")" IconOnClick="ToggleShowPassword" Icon="@(showPassword ? "radio_button_unchecked" : "remove_red_eye")" IconTrailing="true" FullWidth="true" Required="true"></MatTextField></p>
+                </div>
+
+                <br />
+            </MatDialogContent>
+
+            <MatDialogActions>
+                <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+                <MatButton Type="submit"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Reset</MatButton>
+            </MatDialogActions>
+
+        </MatDialog>
+    </EditForm>
+}
+
+@*Delete*@
+@if (!(parent is null) && (mode == Mode.Delete))
+{
+    <MatDialog IsOpen="@deleteDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="true">
+
+        <MatDialogTitle>Delete Parent?</MatDialogTitle>
+
+        <MatDialogContent>
+            <br />
+            <div class="form-group">
+                <p>Are you sure you want to delete <strong>@parent.FullName</strong> permanently?</p>
+            </div>
+            <br />
+        </MatDialogContent>
+
+        <MatDialogActions>
+            <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+            <MatButton @onclick="@(() => DeleteAsync(parent.Id))"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Delete</MatButton>
+        </MatDialogActions>
+
+    </MatDialog>
+}
+
+
+@code {
+
+    #region variables
+
+    private Parent[] parents;
+    private Parent parent;
+    private List<Student> parentStudents;
+    private SignUp signUp;
+    private ResetPassword resetPassword;
+    private List<string> assignableRoles;
+    private List<string> parentRoles;
+
+    private Mode mode = Mode.None;
+    private bool addUpdateDialogIsOpen;
+    private bool deleteDialogIsOpen;
+    private bool rolePanelExpanded;
+    private bool signUpDialogIsOpen;
+    private bool resetPasswordDialogIsOpen;
+    private bool busy;
+    private bool busyRemovingSignUp;
+    private bool loadFailed;
+    private bool sessionExpired;
+    private bool showPassword;
+    private bool usernameAvailable;
+
+    private string add_UpdateTitle;
+    private string add_UpdateButtonLabel;
+    private string add_RemoveAddressButtonLabel;
+    private string usernameAvailabilityText;
+    private string errorTitle = "Error";
+    private string errorMessage = "Sorry, we could not load this resource due to an error. Please, try again later.";
+    #endregion
+
+
+
+    private void Add_RemoveAddress()
+    {
+        if (parent.Address is null)
+        {
+            parent.Address = new ParentAddress { ParentId = Guid.Empty.ToString(), Country = "Nigeria" };
+            add_RemoveAddressButtonLabel = "Remove";
+        }
+        else
+        {
+            parent.Address = null;
+            parent.AddressId = null;
+            add_RemoveAddressButtonLabel = "Add";
+        }
+    }
+
+    private void AddRole(string selectedRole)
+    {
+        if (!(parentRoles.Contains(selectedRole)) && !string.IsNullOrEmpty(selectedRole))
+        {
+            parentRoles.Insert(0, selectedRole);
+            signUp.Roles = parentRoles.ToArray();
+            assignableRoles.Remove(selectedRole);
+        }
+    }
+
+    private async Task Add_UpdateAsync()
+    {
+        busy = true;
+
+        if (mode == Mode.Add)
+        {
+            await ParentService.CreateAsync(parent);
+        }
+        else if (mode == Mode.Update)
+        {
+            await ParentService.UpdateAsync(parent);
+        }
+
+        await LoadAsync();
+        CloseDialogs();
+        Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+
+        busy = false;
+    }
+
+    private async Task CheckUsernameAvailabilityAsync()
+    {
+        @if (!string.IsNullOrEmpty(signUp.Username))
+        {
+            usernameAvailable = await MiscellaneousService.CheckUsernameAvailabilityAsync(signUp.Username);
+            if (usernameAvailable)
+            {
+                usernameAvailabilityText = "This username is available.";
+            }
+            else
+            {
+                usernameAvailabilityText = "This username is not available.";
+            }
+        }
+    }
+
+    private void CloseDialogs()
+    {
+        // Reset fields to their defaults
+        addUpdateDialogIsOpen = false;
+        deleteDialogIsOpen = false;
+        signUpDialogIsOpen = false;
+        resetPasswordDialogIsOpen = false;
+        rolePanelExpanded = false;
+        showPassword = false;
+
+        usernameAvailabilityText = null;
+        parent = null;
+        parentStudents = null;
+        signUp = null;
+        resetPassword = null;
+        mode = Mode.None;
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        busy = true;
+
+        await ParentService.DeleteAsync(id);
+        await LoadAsync();
+        CloseDialogs();
+        Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+
+        busy = false;
+    }
+
+    private void DialogIsOpenChanged(bool isOpened)
+    {
+        if (!isOpened)
+        {
+            CloseDialogs();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        busy = true;
+
+        try
+        {
+            if (AppUser.IsSuperAdmin)
+            {
+                parents = await ParentService.GetAllAsync();
+            }
+            else if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin)
+            {
+                parents = await ParentService.GetAllAsync(schoolId: AppUser.SchoolId);
+            }
+            else
+            {
+                loadFailed = true;
+                errorMessage = "You are not authorised to view this resource.";
+            }
+        }
+        catch (System.Net.Http.HttpRequestException ex)
+        {
+            loadFailed = true;
+            (errorTitle, errorMessage, sessionExpired) = ErrorMessageHelper.GetMessage(ex);
+
+            if (sessionExpired)
+            {
+                try //TODO: Remove the following try catch block when globa error handling is implemented
+                {
+                    await AppUser.SignOutAsync();
+                }
+                catch (Exception e)
+                {
+                    Logger.LogWarning(e, "Unable to log user out.");
+                }
+            }
+
+            Logger.LogWarning(ex, "Failed to load resource.");
+        }
+        catch (Exception ex)
+        {
+            loadFailed = true;
+            Logger.LogWarning(ex, "Failed to load resource.");
+        }
+
+        busy = false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AppUser.InitializeAsync();
+        await LoadAsync();
+        //StateHasChanged();
+    }
+
+    private void RemoveRole(string role)
+    {
+        parentRoles.Remove(role);
+        signUp.Roles = new[] { Role.Parent }; // The role remains parent whether removed or not.
+        assignableRoles.Add(role);
+        assignableRoles.Sort();
+    }
+
+    private async Task RemoveSignUpAsync()
+    {
+        busyRemovingSignUp = true; // Don't use busy = true; because another control on the same page uses it, else, the two controls will show spinning icon.
+
+        await IdentityService.RemoveSignUpAsync(parent.Id);
+        CloseDialogs();
+        Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+
+        busyRemovingSignUp = false;
+    }
+
+    private async Task ResetPasswordAsync()
+    {
+        busy = true;
+
+        await IdentityService.ResetPasswordAsync(resetPassword);
+        CloseDialogs();
+        Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+
+        busy = false;
+    }
+
+    private async Task ShowAddParentDialogAsync()
+    {
+        busy = true;
+
+        parent = new Parent();
+
+        add_UpdateTitle = "Add Parent";
+        add_UpdateButtonLabel = "Add";
+        add_RemoveAddressButtonLabel = "Add";
+        mode = Mode.Add;
+        addUpdateDialogIsOpen = true;
+
+        busy = false;
+    }
+
+    private void ShowDeleteParentDialog(string id)
+    {
+        busy = true;
+
+        //parent = await ParentService.GetAsync(id);
+        parent = parents.FirstOrDefault(x => x.Id == id);
+
+        mode = Mode.Delete;
+        deleteDialogIsOpen = true;
+
+        busy = false;
+    }
+
+    private async Task ShowResetPasswordDialog()
+    {
+        busy = true;
+        resetPassword = new ResetPassword { UserId = parent.Id };
+
+        mode = Mode.ResetPassword;
+        resetPasswordDialogIsOpen = true;
+
+        busy = false;
+    }
+
+    private void ShowSignUpDialog(string id)
+    {
+        busy = true;
+
+        //parent = await ParentService.GetAsync(id);
+        parent = parents.FirstOrDefault(x => x.Id == id);
+        parentRoles = parent.RolesArray.ToList();
+
+        if (parent.IsSignedUp)
+        {
+            // This sign up will not be sent to the api, but it's needed for validation sake.
+            signUp = new SignUp { UserId = id, SchoolId = AppUser.SchoolId, Username = "Some fake username", Password = "FakePassword@123", ConfirmPassword = "FakePassword@123" };
+        }
+        else
+        {
+            signUp = new SignUp { UserId = id, SchoolId = AppUser.SchoolId };
+        }
+
+        signUp.Roles = new[] { Role.Parent };
+
+        assignableRoles = new List<string> { Role.Parent };
+
+        foreach (var role in parentRoles)
+        {
+            assignableRoles.Remove(role);
+        }
+
+        mode = Mode.SignUp;
+        signUpDialogIsOpen = true;
+
+        busy = false;
+    }
+
+    private async Task ShowUpdateParentDialogAsync(string id)
+    {
+        busy = true;
+
+        //parent = await ParentService.GetAsync(id);
+        parent = parents.FirstOrDefault(x => x.Id == id);
+
+        // Get this parent's wards for this school
+        var students = await StudentService.GetAllAsync(parentId: parent.Id.ToString(), schoolId: AppUser.SchoolId);
+        parentStudents = students.ToList();
+        parent.StudentIds = parentStudents.Select(x => x.Id).ToArray();
+
+        add_UpdateTitle = "Update Parent";
+        add_UpdateButtonLabel = "Update";
+
+        mode = Mode.Update;
+        addUpdateDialogIsOpen = true;
+
+        busy = false;
+    }
+
+    private async Task SignUpAsync()
+    {
+        busy = true;
+
+        if (!parent.IsSignedUp)
+        {
+            if (usernameAvailable)
+            {
+                await IdentityService.SignUpAsync(signUp);
+                CloseDialogs();
+                Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+            }
+            else
+            {
+                Toaster.Add("The specified username is already taken. Please, choose another one.", MatToastType.Danger, "Unavailable Username", "error");
+            }
+        }
+
+        busy = false;
+    }
+
+    private async Task ToggleAddressVisibilityAsync(bool addressVisible)
+    {
+        if (addressVisible && parent.Address is null)
+        {
+            if (!string.IsNullOrEmpty(parent.AddressId)) // This person has an address, load it.
+            {
+                var address = await MiscellaneousService.GetAddressAsync(parent.AddressId.ToString());
+                parent.Address = new ParentAddress
+                {
+                    Line1 = address.Line1,
+                    Line2 = address.Line2,
+                    Town = address.Town,
+                    State = address.State,
+                    Country = address.Country,
+                    ParentId = parent.Id
+                };
+
+                add_RemoveAddressButtonLabel = "Remove";
+            }
+            else
+            {
+                add_RemoveAddressButtonLabel = "Add";
+            }
+        }
+    }
+
+    private void ToggleShowPassword()
+        => showPassword = !showPassword;
+
+}

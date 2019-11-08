@@ -1,0 +1,49 @@
+﻿
+
+<div>
+    <div class="row">
+        <div class="form-group col-md-6">
+            <MatTextField @bind-Value="Person.FirstName" Label="First Name" Required="true"></MatTextField>
+        </div>
+        <div class="form-group col-md-6">
+            <MatTextField @bind-Value="Person.MiddleName" Label="Middle Name"></MatTextField>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group col-md-6">
+            <MatTextField @bind-Value="Person.LastName" Label="Last Name" Required="true"></MatTextField>
+        </div>
+        <div class="form-group col-md-6">
+            <MatTextField @bind-Value="Person.PhoneNumber" Label="Phone Number"></MatTextField>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="form-group col-md-6">
+            <MatDatePicker @bind-Value="Person.DateOfBirth" Label="Date Of Birth" Required="DateOfBirthRequired"></MatDatePicker>
+        </div>
+        <div class="form-group col-md-6">
+            <MatSelect @bind-Value="Person.Gender" Label="Gender*" Required="true" Enhanced="true">
+                <MatOption Value="Male">Male</MatOption>
+                <MatOption Value="Female">Female</MatOption>
+            </MatSelect>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-md-6">
+            <MatTextField @bind-Value="Person.Email" Label="Email"></MatTextField>
+        </div>
+        @*<div class="form-group col-md-6">
+        </div>*@
+    </div>
+</div>
+
+
+@code {
+
+    [Parameter] public Person Person { get; set; }
+    [Parameter] public bool DateOfBirthRequired { get; set; } = false;
+
+
+    }

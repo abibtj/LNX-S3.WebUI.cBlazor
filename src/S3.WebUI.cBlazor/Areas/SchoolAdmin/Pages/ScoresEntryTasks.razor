@@ -1,0 +1,351 @@
+﻿@page "/schadm/scores-entry-tasks"
+@inject IScoresEntryTaskService ScoresEntryTaskService
+@inject IClassService ClassService
+@inject ITeacherService TeacherService
+@inject ILogger<ScoresEntryTasks> Logger
+@inject AppUser AppUser
+@inject IMatToaster Toaster
+
+<MatH5>Scores Entry</MatH5>
+<br />
+
+@if (!(scoresEntryTasks is null))
+{
+    @if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin) // School admin can add new scoresEntryTasks
+    {
+        <MatButton OnClick="ShowAddScoresEntryTaskDialogAsync" Icon="person_add">Add Task</MatButton>
+    }
+    <MatButton OnClick="LoadAsync" Icon="refresh">Refresh</MatButton>
+
+    <img class="@(busy? "show-gif": "hide-gif")" src="/images/loading.gif" />
+
+    <MatTable Items="@scoresEntryTasks" Striped="true">
+        <MatTableHeader>
+            <th>Class</th>
+            <th>Subject</th>
+            <th>Teacher</th>
+            <th>Due Date</th>
+            <th></th>
+        </MatTableHeader>
+        <MatTableRow>
+            <td>@context.ClassName</td>
+            <td>@context.Subject</td>
+            <td>@context.TeacherName</td>
+            <td>@context.DueDate?.ToShortDateString()</td>
+            <td>
+                @if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin) // School admin can add new scoresEntryTasks
+                {
+                    <MatIconButton OnClick="@(() => ShowUpdateScoresEntryTaskDialogAsync(context.Id))" Icon="edit" Attributes="@(new Dictionary<string, object>() { { "title", "Edit Task" } })"></MatIconButton>
+                    <MatIconButton OnClick="@(() => ShowDeleteScoresEntryTaskDialog(context.Id))" Icon="delete_forever" Attributes="@(new Dictionary<string, object>() { { "title", "Delete Task" } })"></MatIconButton>
+                    }
+            </td>
+        </MatTableRow>
+    </MatTable>
+}
+else if (loadFailed)
+{
+    <p><em>@errorMessage</em></p>
+    Toaster.Add(errorMessage, MatToastType.Danger, errorTitle, "error");
+}
+else
+{
+    <MatProgressBar Indeterminate="true"></MatProgressBar>
+}
+
+@*Add / Update*@
+@if (!(scoresEntryTask is null) && (mode == Mode.Add || mode == Mode.Update))
+{
+    <EditForm Model="scoresEntryTask" OnValidSubmit="Add_UpdateAsync">
+        <PeterLeslieMorris.Blazor.Validation.Validate />
+        <MatDialog IsOpen="@addUpdateDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+
+            <MatDialogTitle>@add_UpdateTitle</MatDialogTitle>
+
+            <MatDialogContent>
+                <ValidationSummary />
+
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <MatSelect Value="@selectedClassId" ValueChanged="LoadSubjects" Label="Class*" Required="true" Enhanced="true">
+                            @if (!(availableClasses is null))
+                            {
+                                @foreach (var _class in availableClasses)
+                                {
+                                    <MatOption Value="@_class.Id">@_class.Name</MatOption>
+                                }
+                            }
+                        </MatSelect>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <MatSelect @bind-Value="scoresEntryTask.Subject" Label="Subject*" Required="true" Enhanced="true">
+                            @if (!(classSubjects is null))
+                            {
+                                @foreach (var subject in classSubjects)
+                                {
+                                    <MatOption Value="@subject">@subject</MatOption>
+                                }
+                            }
+                        </MatSelect>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <S3MatAutoComplete Collection="availableTeachers" StringValue="@selectedTeacher" ValueChanged="SetSelectedTeacher" ItemType="Teacher" CustomStringSelector="@(x => x.FullName)" Label="Teacher*" ShowClearButton="true"></S3MatAutoComplete>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <MatDatePicker @bind-Value="scoresEntryTask.DueDate" Label="Due Date"></MatDatePicker>
+                    </div>
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        <MatTextField @bind-Value="scoresEntryTask.Description" Label="Description" TextArea="true" FullWidth="true"></MatTextField>
+                    </div>
+                </div>
+
+
+            </MatDialogContent>
+
+            <MatDialogActions>
+                <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+                <MatButton Type="submit"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>@add_UpdateButtonLabel</MatButton>
+            </MatDialogActions>
+
+        </MatDialog>
+    </EditForm>
+}
+
+@*Delete*@
+@if (!(scoresEntryTask is null) && (mode == Mode.Delete))
+{
+    <MatDialog IsOpen="@deleteDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="true">
+
+        <MatDialogTitle>Delete Task?</MatDialogTitle>
+
+        <MatDialogContent>
+            <br />
+            <div class="form-group">
+                <p>Are you sure you want to delete <strong>@scoresEntryTask.ClassName, @scoresEntryTask.Subject</strong> scores entry task permanently?</p>
+            </div>
+            <br />
+        </MatDialogContent>
+
+        <MatDialogActions>
+            <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+            <MatButton @onclick="@(() => DeleteAsync(scoresEntryTask.Id))"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Delete</MatButton>
+        </MatDialogActions>
+
+    </MatDialog>
+}
+
+
+@code {
+
+    #region variables
+
+    private ScoresEntryTask[] scoresEntryTasks;
+    private ScoresEntryTask scoresEntryTask;
+    private Class[] availableClasses;
+    private Teacher[] availableTeachers;
+    private string selectedTeacher;
+    private string[] classSubjects;
+
+    private Mode mode = Mode.None;
+    private bool addUpdateDialogIsOpen;
+    private bool deleteDialogIsOpen;
+    private bool busy;
+    private bool loadFailed;
+    private bool sessionExpired;
+
+    private string selectedClassId;
+    private string add_UpdateTitle;
+    private string add_UpdateButtonLabel;
+    private string errorTitle = "Error";
+    private string errorMessage = "Sorry, we could not load this resource due to an error. Please, try again later.";
+    #endregion
+
+
+    private async Task Add_UpdateAsync()
+    {
+        busy = true;
+
+        if (mode == Mode.Add)
+        {
+            await ScoresEntryTaskService.CreateAsync(scoresEntryTask);
+        }
+        else if (mode == Mode.Update)
+        {
+            await ScoresEntryTaskService.UpdateAsync(scoresEntryTask);
+        }
+
+        await LoadAsync();
+        CloseDialogs();
+        Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+
+        busy = false;
+    }
+
+    private void CloseDialogs()
+    {
+        // Reset fields to their defaults
+        addUpdateDialogIsOpen = false;
+        deleteDialogIsOpen = false;
+
+        selectedClassId = null;
+        availableClasses = null;
+        availableTeachers = null;
+        selectedTeacher = null;
+        scoresEntryTask = null;
+        classSubjects = null;
+
+        mode = Mode.None;
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        busy = true;
+
+        await ScoresEntryTaskService.DeleteAsync(id);
+        await LoadAsync();
+        CloseDialogs();
+        Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+
+        busy = false;
+    }
+
+    private void DialogIsOpenChanged(bool isOpened)
+    {
+        if (!isOpened)
+        {
+            CloseDialogs();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        busy = true;
+
+        try
+        {
+            if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin)
+            {
+                scoresEntryTasks = await ScoresEntryTaskService.GetAllAsync(schoolId: AppUser.SchoolId);
+            }
+            else
+            {
+                loadFailed = true;
+                errorMessage = "You are not authorised to view this resource.";
+            }
+        }
+        catch (System.Net.Http.HttpRequestException ex)
+        {
+            loadFailed = true;
+            (errorTitle, errorMessage, sessionExpired) = ErrorMessageHelper.GetMessage(ex);
+
+            if (sessionExpired)
+            {
+                try //TODO: Remove the following try catch block when globa error handling is implemented
+                {
+                    await AppUser.SignOutAsync();
+                }
+                catch (Exception e)
+                {
+                    Logger.LogWarning(e, "Unable to log user out.");
+                }
+            }
+
+            Logger.LogWarning(ex, "Failed to load resource.");
+        }
+        catch (Exception ex)
+        {
+            loadFailed = true;
+            Logger.LogWarning(ex, "Failed to load resource.");
+        }
+
+        busy = false;
+    }
+
+    private void LoadSubjects(string selectedClassId)
+    {
+        var selectedClass = availableClasses.ToList().Find(x => x.Id == selectedClassId);
+
+        this.selectedClassId = selectedClassId;
+        scoresEntryTask.ClassId = selectedClassId;
+        scoresEntryTask.ClassName = selectedClass.Name;
+        classSubjects = selectedClass.SubjectsArray;
+        scoresEntryTask.Subject = null; // When class changes, select only from subjects present in the new class
+    }
+
+    private async Task LoadRequirementsAsync()
+    {
+        availableClasses = await ClassService.GetAllAsync(schoolId: AppUser.SchoolId);
+        availableTeachers = await TeacherService.GetAllSignedUpAsync(schoolId: AppUser.SchoolId);
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AppUser.InitializeAsync();
+        await LoadAsync();
+        //StateHasChanged();
+    }
+
+    private void SetSelectedTeacher(Teacher selectedTeacher)
+    {
+        scoresEntryTask.TeacherId = selectedTeacher.Id;
+        scoresEntryTask.TeacherName = selectedTeacher.FullName;
+        this.selectedTeacher = selectedTeacher.FullName;
+    }
+
+    private async Task ShowAddScoresEntryTaskDialogAsync()
+    {
+        busy = true;
+        mode = Mode.Add;
+
+        scoresEntryTask = new ScoresEntryTask { SchoolId = AppUser.SchoolId };
+        await LoadRequirementsAsync();
+
+        add_UpdateTitle = "Add Task";
+        add_UpdateButtonLabel = "Add";
+
+        addUpdateDialogIsOpen = true;
+
+        busy = false;
+    }
+
+    private void ShowDeleteScoresEntryTaskDialog(string id)
+    {
+        busy = true;
+
+        //scoresEntryTask = await ScoresEntryTaskService.GetAsync(id);
+        scoresEntryTask = scoresEntryTasks.FirstOrDefault(x => x.Id == id);
+
+        mode = Mode.Delete;
+        deleteDialogIsOpen = true;
+
+        busy = false;
+    }
+
+    private async Task ShowUpdateScoresEntryTaskDialogAsync(string id)
+    {
+        busy = true;
+        mode = Mode.Update;
+
+        //scoresEntryTask = await ScoresEntryTaskService.GetAsync(id);
+        scoresEntryTask = scoresEntryTasks.FirstOrDefault(x => x.Id == id);
+        await LoadRequirementsAsync();
+
+        this.selectedClassId = scoresEntryTask.ClassId;
+        this.selectedTeacher = availableTeachers.ToList().Find(x => x.Id == scoresEntryTask.TeacherId).FullName;
+
+        classSubjects = availableClasses.ToList().Find(x => x.Id == scoresEntryTask.ClassId).SubjectsArray;
+
+        add_UpdateTitle = "Update Task";
+        add_UpdateButtonLabel = "Update";
+
+        addUpdateDialogIsOpen = true;
+
+        busy = false;
+    }
+
+}

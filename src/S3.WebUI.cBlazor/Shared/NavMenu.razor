@@ -1,0 +1,65 @@
+﻿@inject AppUser AppUser
+@*@inject IIdentityService IdentityService*@
+@*@inject IMatToaster Toaster*@
+@inject NavigationManager NavigationManager
+
+
+<MatNavMenu>
+    <MatNavItem Href="/"><MatIcon Icon="home"></MatIcon>&nbsp; Home</MatNavItem>
+
+    <MatDivider></MatDivider>
+
+    <MatNavItem Href="/"><span class="oi oi-dashboard"></span>&nbsp; Dashboard</MatNavItem>
+
+    @if (AppUser.IsSuperAdmin)
+    {
+        <NavItemsSuperAdmin />
+    }
+
+    @if (AppUser.IsAdmin)
+    {
+        <NavItemsSuperAdmin />
+    }
+
+    @if (AppUser.IsSchoolAdmin)
+    {
+        <NavItemsSchoolAdmin />
+    }
+
+    @if (AppUser.IsAssistantSchoolAdmin)
+    {
+        @*<NavItemsSchoolAdmin />*@
+    }
+
+    @if (AppUser.IsTeacher)
+    {
+        <NavItemsTeacher />
+    }
+
+    @if (AppUser.IsParent)
+    {
+        @*<NavItemsSchoolAdmin />*@
+    }
+
+    @if (AppUser.IsStudent)
+    {
+        @*<NavItemsSchoolAdmin />*@
+    }
+
+
+    <MatDivider></MatDivider>
+
+    <MatNavSubMenu>
+        <MatNavSubMenuHeader>
+            <MatNavItem AllowSelection="false"><MatIcon Icon="settings"></MatIcon>&nbsp; Settings</MatNavItem>
+        </MatNavSubMenuHeader>
+
+        <MatNavSubMenuList>
+            <MatNavItem Href="profile">Profile</MatNavItem>
+
+            <MatNavItem Href="change-password">Change Password</MatNavItem>
+        </MatNavSubMenuList>
+    </MatNavSubMenu>
+</MatNavMenu>
+
+

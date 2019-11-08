@@ -1,0 +1,224 @@
+﻿@page "/schadm/scores"
+@*@inject IScoresService ScoresService*@
+@inject IClassService ClassService
+@*@inject ITeacherService TeacherService*@
+@inject IStudentScoreService StudentScoreService
+@inject ILogger<Scores> Logger
+@inject AppUser AppUser
+@inject IMatToaster Toaster
+
+<MatH5>Scores</MatH5>
+<br />
+
+@if (!(scores is null))
+{
+<div class="row">
+  
+    <div class="col-md-4">
+        <MatSelect Value="@examType" ValueChanged="ChangeExamTypeAsync" Label="Exam Type" Enhanced="true">
+            <MatOption Value="Continuos Assessment">C.A.</MatOption>
+            <MatOption Value="First Exam">First Exam</MatOption>
+            <MatOption Value="Second Exam">Second Exam</MatOption>
+            <MatOption Value="Class Activities">Class Activities</MatOption>
+            <MatOption Value="Homework">Homework</MatOption>
+        </MatSelect>
+    </div>
+    <div class="col-md-4">
+        <MatSelect Value="@classId" ValueChanged="ChangeClassAsync" Label="Class" Enhanced="true">
+            @if (!(availableClasses is null))
+            {
+                @foreach (var _class in availableClasses)
+                {
+                    <MatOption Value="@_class.Id">@_class.Name</MatOption>
+                }
+            }
+        </MatSelect>
+    </div>
+    <div class="col-md-4">
+        <MatSelect Value="@subject" ValueChanged="ChangeSubjectAsync" Label="Subject" Enhanced="true">
+            @if (!(classSubjects is null))
+            {
+                @foreach (var subject in classSubjects)
+                {
+                    <MatOption Value="@subject">@subject</MatOption>
+                }
+            }
+        </MatSelect>
+    </div>
+</div>
+<div class="row">
+
+    <div class="col-md-4">
+        <MatSelect Value="@term" ValueChanged="ChangeTermAsync" Label="Term" Enhanced="true">
+            <MatOption Value="1">First Term</MatOption>
+            <MatOption Value="2">Second Term</MatOption>
+            <MatOption Value="3">Third Term</MatOption>
+        </MatSelect>
+    </div>
+    <div class="col-md-4">
+        <MatDatePicker Value="@session" ValueChanged="ChangeSessionAsync" Label="Session"></MatDatePicker>
+    </div>
+
+</div>
+
+    <img class="@(busy? "show-gif": "hide-gif")" src="/images/loading.gif" />
+
+    <MatTable Items="@scores" Striped="true">
+        <MatTableHeader>
+            <th>Name</th>
+            <th>Score</th>
+            <th>Subject</th>
+            <th>Class</th>
+        </MatTableHeader>
+        <MatTableRow>
+            @if (scores.Length > 0)
+                {
+                <td>@context.StudentName</td>
+                <td>@context.Mark</td>
+                <td>@context.Subject</td>
+                <td>@context.ClassName</td>
+                }
+                else
+                {
+                <td>No scores found! Please, select appropriate criteria.</td>
+                }
+        </MatTableRow>
+    </MatTable>
+}
+else if (loadFailed)
+{
+    <p><em>@errorMessage</em></p>
+    Toaster.Add(errorMessage, MatToastType.Danger, errorTitle, "error");
+}
+else
+{
+    <MatProgressBar Indeterminate="true"></MatProgressBar>
+}
+
+
+@code {
+
+    #region variables
+
+    private StudentScore[] scores;
+    private Class[] availableClasses;
+    private string[] classSubjects;
+
+    //private Mode mode = Mode.None;
+    private bool busy;
+    private bool loadFailed;
+    private bool sessionExpired;
+
+    string classId;
+    string subject;
+    private string term = "1"; // To be typecast to int
+    private string examType;
+    private DateTime session = DateTime.UtcNow;
+    private string errorTitle = "Error";
+    private string errorMessage = "Sorry, we could not load this resource due to an error. Please, try again later.";
+    #endregion
+
+    private async Task LoadAsync()
+    {
+        busy = true;
+
+        try
+        {
+            if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin)
+            {
+
+                availableClasses = await ClassService.GetAllAsync(schoolId: AppUser.SchoolId);
+
+                //    scores = await StudentScoreService.GetAllAsync(schoolId: AppUser.SchoolId, classId: classId,
+                //    subject: subject, examType: examType, term: int.Parse(term), session: session.Year);
+                scores = new StudentScore[] { };
+            }
+            else
+            {
+                loadFailed = true;
+                errorMessage = "You are not authorised to view this resource.";
+            }
+        }
+        catch (System.Net.Http.HttpRequestException ex)
+        {
+            loadFailed = true;
+            (errorTitle, errorMessage, sessionExpired) = ErrorMessageHelper.GetMessage(ex);
+
+            if (sessionExpired)
+            {
+                try //TODO: Remove the following try catch block when globa error handling is implemented
+                {
+                    await AppUser.SignOutAsync();
+                }
+                catch (Exception e)
+                {
+                    Logger.LogWarning(e, "Unable to log user out.");
+                }
+            }
+
+            Logger.LogWarning(ex, "Failed to load resource.");
+        }
+        catch (Exception ex)
+        {
+            loadFailed = true;
+            Logger.LogWarning(ex, "Failed to load resource.");
+        }
+
+        busy = false;
+    }
+
+    private async Task ChangeClassAsync(string selectedClassId)
+    {
+        var selectedClass = availableClasses.ToList().Find(x => x.Id == selectedClassId);
+
+        classId = selectedClassId;
+        classSubjects = selectedClass.SubjectsArray;
+
+        await SearchScoresAsync();
+    }
+
+    private async Task ChangeExamTypeAsync(string selectedExamType)
+    {
+        examType = selectedExamType;
+        await SearchScoresAsync();
+    }
+
+    private async Task ChangeSessionAsync(DateTime? selectedSession)
+    {
+        if (selectedSession?.Year != session.Year)
+        {
+            session = selectedSession.Value;
+            await SearchScoresAsync();
+        }
+    }
+
+    private async Task ChangeSubjectAsync(string selectedSubject)
+    {
+        subject = selectedSubject;
+        await SearchScoresAsync();
+    }
+
+    private async Task ChangeTermAsync(string selectedTerm)
+    {
+        term = selectedTerm;
+        await SearchScoresAsync();
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AppUser.InitializeAsync();
+        await LoadAsync();
+        //StateHasChanged();
+    }
+
+    protected async Task SearchScoresAsync()
+    {
+        busy = true;
+
+        scores = await StudentScoreService.GetAllAsync(schoolId: AppUser.SchoolId, classId: classId,
+                subject: subject, examType: examType, term: int.Parse(term), session: session.Year);
+
+        busy = false;
+    }
+
+}

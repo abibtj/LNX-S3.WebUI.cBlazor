@@ -1,0 +1,85 @@
+﻿@inherits LayoutComponentBase
+@inject AppUser User
+
+<MatAppBarContainer>
+    <MatToastContainer />
+
+    <MatAppBar Fixed="true">
+        <MatAppBarRow>
+            <MatAppBarSection>
+                <MatIconButton Icon="menu" @onclick="ToggleNavMenu"></MatIconButton>
+                <MatAppBarTitle><a class="navbar-brand text-white" href="">S3 Web UI</a></MatAppBarTitle>
+            </MatAppBarSection>
+            <MatAppBarSection Align="@MatAppBarSectionAlign.End">
+                <NavLink class="text-white nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
+
+                @if (User.IsSignedIn)
+                {
+                    <NavLink class="text-white nav-link" href="" Match="NavLinkMatch.All">@User.Username</NavLink>
+                    <NavLink class="text-white nav-link" href="" Match="NavLinkMatch.All" @onclick="User.SignOutAsync">Log out</NavLink>
+                }
+                else
+                {
+                    <NavLink class="text-white nav-link" href="login" Match="NavLinkMatch.All">Log in</NavLink>
+                }
+            </MatAppBarSection>
+        </MatAppBarRow>
+    </MatAppBar>
+
+    <MatAppBarContent>
+        <MatDrawerContainer Style="width: 100vw; height: 100vh;">
+            @if (User.IsSignedIn)
+            {
+                <MatDrawer @bind-Opened="navDrawerOpened">
+                    <NavMenu />
+                </MatDrawer>
+            }
+
+            <MatDrawerContent>
+                <div class="container">
+                    <div  class="mat-elevation-z5">
+                    @Body
+                    </div>
+                </div>
+            </MatDrawerContent>
+        </MatDrawerContainer>
+    </MatAppBarContent>
+</MatAppBarContainer>
+
+@code {
+
+    protected override async Task OnInitializedAsync()
+    {
+        //if (firstRender)
+        //{
+        await User.InitializeAsync();
+        //StateHasChanged();
+        //}
+
+    }
+
+    bool navDrawerOpened = true;
+
+    void ToggleNavMenu()
+    {
+        navDrawerOpened = !navDrawerOpened;
+    }
+}
+
+
+
+@*@inherits LayoutComponentBase
+
+<div class="sidebar">
+    <NavMenu />
+</div>
+
+<div class="main">
+    <div class="top-row px-4">
+        <a href="http://blazor.net" target="_blank" class="ml-md-auto">About</a>
+    </div>
+
+    <div class="content px-4">
+        @Body
+    </div>
+</div>*@

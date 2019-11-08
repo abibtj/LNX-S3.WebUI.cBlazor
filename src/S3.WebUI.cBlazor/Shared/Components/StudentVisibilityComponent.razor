@@ -1,0 +1,114 @@
+﻿@inject IStudentService StudentService
+@inject AppUser AppUser
+
+@*Students or Children or Wards*@
+<MatAccordion>
+    <MatExpansionPanel ExpandedChanged="ToggleStudentsVisibilityAsync">
+        <MatExpansionPanelSummary>
+            <MatExpansionPanelHeader>Students*</MatExpansionPanelHeader>
+        </MatExpansionPanelSummary>
+        <MatExpansionPanelDetails>
+            @if (IsAdmin) // Non-admin cannot add students to themselves
+            {
+            <div class="form-group">
+                @* TODO: User searchable select because available student list may be very large *@
+                <S3MatAutoComplete Collection="availableStudents" OnOpenedChanged="AddStudent" @bind-Value="selectedStudent" ItemType="Student" CustomStringSelector="@(x => x.FullName)" Label="Select Student" ShowClearButton="true"></S3MatAutoComplete>
+                <MatButton Type="button" OnClick="AddStudent" Icon="person_add">Add</MatButton>
+            </div>
+                <br />
+            }
+
+
+            @if (!(ParentStudents is null))
+            {
+                <table class="table table-striped">
+                    <tbody>
+                        @foreach (var student in ParentStudents)
+                        {
+                            <tr>
+                                <td>@(ParentStudents.IndexOf(student) + 1)</td>
+                                <td>@student.FullName</td>
+                                @if (IsAdmin) // Non-admin cannot remove students from themselves
+                                {
+                                    <td>
+                                        <MatIconButton OnClick="@(() => RemoveStudent(@student))" Icon="delete_forever" Attributes="@(new Dictionary<string, object>() { { "title", "Remove Student" }, { "type", "button" } })"></MatIconButton>
+                                    </td>
+                                }
+
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+            <br />
+            <br />
+
+        </MatExpansionPanelDetails>
+    </MatExpansionPanel>
+</MatAccordion>
+
+
+@code {
+
+    private Student selectedStudent;
+    private List<Student> availableStudents;
+
+    [Parameter] public Parent Parent { get; set; } // The parent whose students are being displayed / modified.
+    [Parameter] public List<Student> ParentStudents  { get; set; } = null; // The parent's students which might have been loaded ealier
+    [Parameter] public Mode Mode { get; set; }
+    [Parameter] public bool IsAdmin { get; set; } = false;
+
+    private void AddStudent()
+    {
+        if (!(selectedStudent is null) && !(ParentStudents.Any(x => x.Id == selectedStudent.Id)))
+        {
+            ParentStudents.Insert(0, selectedStudent);
+            availableStudents.Remove(availableStudents.Find(x => x.Id == selectedStudent.Id));
+            selectedStudent = null; // This enables auto clear of the UI component used for selection
+
+            Parent.StudentIds = ParentStudents.Select(x => x.Id).ToArray();
+        }
+    }
+
+    private void RemoveStudent(Student student)
+    {
+        ParentStudents.Remove(student);
+        availableStudents.Add(student);
+
+        Parent.StudentIds = ParentStudents.Select(x => x.Id).ToArray();
+    }
+
+    private async Task ToggleStudentsVisibilityAsync(bool studentsVisible)
+    {
+        if (studentsVisible)
+        {
+            if (Mode == Mode.Add && ParentStudents is null)
+            {
+                ParentStudents = new List<Student>();
+            }
+            else if ((Mode == Mode.Update || Mode == Mode.None) && ParentStudents is null)
+            {
+                // Get this parent's wards for this school
+                var students = await StudentService.GetAllAsync(parentId: Parent.Id.ToString(), schoolId: AppUser.SchoolId);
+                ParentStudents = students.ToList();
+            }
+
+            if (IsAdmin) // Non-admin does not need to know available students in a school
+            {
+                if (availableStudents is null)
+                {
+                    // Get the available students in this school
+                    var students = await StudentService.GetAllAsync(schoolId: AppUser.SchoolId);
+                    availableStudents = students.ToList();
+                }
+
+                // Remove ParentStudents from availableStudents
+                foreach (var student in ParentStudents)
+                {
+                    availableStudents.Remove(availableStudents.Find(x => x.Id == student.Id));
+                }
+            }
+        }
+    }
+
+}

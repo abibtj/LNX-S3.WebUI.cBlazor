@@ -1,0 +1,363 @@
+﻿@page "/profile"
+@*@inject IConfiguration Configuration*@
+@inject HttpClient HttpClient
+@inject NavigationManager NavigationManager
+@inject AppUser AppUser
+@inject ITeacherService TeacherService
+@inject IParentService ParentService
+@inject IStudentService StudentService
+@*@inject IIdentityService IdentityService*@
+@inject IMiscellaneousService MiscellaneousService
+@inject IMatToaster Toaster
+@inject ILogger<Profile> Logger
+
+
+<br />
+
+@if (isTeacher && !(teacher is null))
+{
+    <EditForm Model="teacher" OnValidSubmit="UpdateProfileAsync">
+        <PeterLeslieMorris.Blazor.Validation.Validate />
+        <div class="col-md-6 offset-md-3 mat-elevation-z24">
+            <MatH6>Profile</MatH6>
+
+            <ValidationSummary />
+            <br />
+
+            @*Teacher properties*@
+            <div>
+                <PersonDetailsComponent Person="teacher"></PersonDetailsComponent>
+
+                @*Pull this row up to match the last item displayed from the component*@
+                <div class="row mt-md-n5 pull-up">
+                    <div class="form-group col-md-6 offset-md-6">
+                        <MatTextField @bind-Value="gradeLevel" Label="Grade Level" ReadOnly="true"></MatTextField>
+                    </div>
+
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <MatTextField @bind-Value="teacher.Position" Label="Position" ReadOnly="true"></MatTextField>
+                    </div>
+                    <div class="form-group col-md-6">
+                        <MatTextField @bind-Value="step" Label="Step" ReadOnly="true"></MatTextField>
+                    </div>
+
+                </div>
+
+                <div class="row">
+                    <div class="form-group col-md-6">
+                        <MatTextField @bind-Value="roles" Label="Role" ReadOnly="true" TextArea="true"></MatTextField>
+                    </div>
+                    <div class="form-group col-md-6">
+                    </div>
+                </div>
+            </div>
+
+            @*Address*@
+            <MatAccordion>
+                <MatExpansionPanel ExpandedChanged="ToggleAddressVisibilityAsync">
+                    <MatExpansionPanelSummary>
+                        <MatExpansionPanelHeader>Address</MatExpansionPanelHeader>
+                    </MatExpansionPanelSummary>
+                    <MatExpansionPanelDetails>
+                        <div class="row">
+                            <div class="form-group">
+                                <MatButton Type="button" OnClick="Add_RemoveAddress">@add_RemoveAddressButtonLabel</MatButton>
+                            </div>
+                        </div>
+
+                        @if (!(teacher.Address is null))
+                        {
+                            <AddressComponent Address="teacher.Address"></AddressComponent>
+                        }
+
+                    </MatExpansionPanelDetails>
+                </MatExpansionPanel>
+            </MatAccordion>
+
+            <br />
+
+            @*To push the buttons to the right*@
+            <MatDialogActions>
+                <MatButton Type="button" OnClick="GoHome">Back</MatButton>
+                <MatButton Type="submit"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Update</MatButton>
+            </MatDialogActions>
+        </div>
+        <br />
+        <br />
+
+    </EditForm>
+}
+else if (isParent && !(parent is null))
+{
+    <EditForm Model="parent" OnValidSubmit="UpdateProfileAsync">
+        <PeterLeslieMorris.Blazor.Validation.Validate />
+        <div class="col-md-6 offset-md-3 mat-elevation-z24">
+            <MatH6>Profile</MatH6>
+
+            <ValidationSummary />
+            <br />
+
+            @*Parent properties*@
+            <div>
+                <PersonDetailsComponent Person="parent"></PersonDetailsComponent>
+            </div>
+
+            @*Students or Children or Wards*@
+            <StudentVisibilityComponent Mode="Mode.None" Parent="parent" ParentStudents="parentStudents"></StudentVisibilityComponent>
+            <br />
+
+            @*Address*@
+            <MatAccordion>
+                <MatExpansionPanel ExpandedChanged="ToggleAddressVisibilityAsync">
+                    <MatExpansionPanelSummary>
+                        <MatExpansionPanelHeader>Address</MatExpansionPanelHeader>
+                    </MatExpansionPanelSummary>
+                    <MatExpansionPanelDetails>
+                        <div class="row">
+                            <div class="form-group">
+                                <MatButton Type="button" OnClick="Add_RemoveAddress">@add_RemoveAddressButtonLabel</MatButton>
+                            </div>
+                        </div>
+
+                        @if (!(parent.Address is null))
+                        {
+                            <AddressComponent Address="parent.Address"></AddressComponent>
+                        }
+                    </MatExpansionPanelDetails>
+                </MatExpansionPanel>
+            </MatAccordion>
+
+            <br />
+            <MatDialogActions>
+                @*To push the buttons to the right*@
+                <MatButton Type="button" OnClick="GoHome">Back</MatButton>
+                <MatButton Type="submit"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Update</MatButton>
+            </MatDialogActions>
+        </div>
+        <br />
+        <br />
+
+    </EditForm>
+}
+else if (loadFailed)
+{
+    <p><em>@errorMessage</em></p>
+    Toaster.Add(errorMessage, MatToastType.Danger, errorTitle, "error");
+}
+else
+{
+    <MatProgressBar Indeterminate="true"></MatProgressBar>
+}
+
+@code{
+
+    private bool busy;
+    private bool loadFailed;
+    private bool isTeacher;
+    private bool isParent;
+    private bool sessionExpired;
+
+    private List<Student> parentStudents;
+    private List<string> states;
+    string roles;
+    string gradeLevel;
+    string step;
+    string errorMessage;
+    string errorTitle;
+    string add_RemoveAddressButtonLabel;
+
+    Teacher teacher;
+    Parent parent;
+
+    private void Add_RemoveAddress()
+    {
+        if (isTeacher)
+        {
+            if (teacher.Address is null)
+            {
+                teacher.Address = new TeacherAddress { TeacherId = Guid.Empty.ToString(), Country = "Nigeria" };
+                add_RemoveAddressButtonLabel = "Remove";
+            }
+            else
+            {
+                teacher.Address = null;
+                teacher.AddressId = null;
+                add_RemoveAddressButtonLabel = "Add";
+            }
+        }
+        else if (isParent)
+        {
+            if (parent.Address is null)
+            {
+                parent.Address = new ParentAddress { ParentId = Guid.Empty.ToString(), Country = "Nigeria" };
+                add_RemoveAddressButtonLabel = "Remove";
+            }
+            else
+            {
+                parent.Address = null;
+                parent.AddressId = null;
+                add_RemoveAddressButtonLabel = "Add";
+            }
+        }
+    }
+
+    private void GoHome()
+    {
+        // Reset fields to their defaults
+        //busy = false;
+        //loadFailed = false;
+        //isTeacher = false;
+        //isParent = false;
+        //teacher = null;
+        //parent = null;
+
+        NavigationManager.NavigateTo("");
+    }
+
+    private async Task LoadAsync()
+    {
+        try
+        {
+            if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin || AppUser.IsTeacher)
+            {
+                teacher = await TeacherService.GetAsync(AppUser.Id);
+
+                //TODO: teachers can be parents too, if so, get their students and display them
+                //var students = await StudentService.GetAllAsync(parentId: teacher.Id.ToString());
+                //parentStudents = students.ToList();
+                //parent.StudentIds = parentStudents.Select(x => x.Id).ToArray();
+
+                roles = string.Join(", ", teacher.RolesArray);
+                gradeLevel = teacher.GradeLevel?.ToString();
+                step = teacher.Step?.ToString();
+                isTeacher = true;
+            }
+            else if (AppUser.IsParent)
+            {
+                parent = await ParentService.GetAsync(AppUser.Id);
+
+                // Get this parent's wards for all schools
+                var students = await StudentService.GetAllAsync(parentId: parent.Id.ToString());
+                parentStudents = students.ToList();
+                parent.StudentIds = parentStudents.Select(x => x.Id).ToArray();
+
+                roles = string.Join(", ", parent.RolesArray);
+                isParent = true;
+            }
+            else
+            {
+                loadFailed = true;
+                errorMessage = "You do not have permission to edit your profile.";
+            }
+
+            //// Load states from json file
+            //var state = new State();
+            //Configuration.GetSection("states").Bind(state);
+            //states = state.States.ToList();
+
+            states = await HttpClient.GetJsonAsync<List<string>>("json-data/states.json");
+        }
+        catch (System.Net.Http.HttpRequestException ex)
+        {
+            loadFailed = true;
+            (errorTitle, errorMessage, sessionExpired) = ErrorMessageHelper.GetMessage(ex);
+
+            if (sessionExpired)
+            {
+                try //TODO: Remove the following try catch block when globa error handling is implemented
+                {
+                    await AppUser.SignOutAsync();
+                }
+                catch (Exception e)
+                {
+                    Logger.LogWarning(e, "Unable to log user out.");
+                }
+            }
+
+            Logger.LogWarning(ex, "Failed to load resource.");
+
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await AppUser.InitializeAsync();
+            await LoadAsync();
+            StateHasChanged();
+        }
+    }
+
+    private async Task ToggleAddressVisibilityAsync(bool addressVisible)
+    {
+        if (addressVisible && isTeacher && teacher.Address is null)
+        {
+            if (!string.IsNullOrEmpty(teacher.AddressId)) // This person has an address, load it.
+            {
+                var address = await MiscellaneousService.GetAddressAsync(teacher.AddressId.ToString());
+                teacher.Address = new TeacherAddress
+                {
+                    Line1 = address.Line1,
+                    Line2 = address.Line2,
+                    Town = address.Town,
+                    State = address.State,
+                    Country = address.Country,
+                    TeacherId = teacher.Id
+                };
+
+                add_RemoveAddressButtonLabel = "Remove";
+            }
+            else
+            {
+                add_RemoveAddressButtonLabel = "Add";
+            }
+        }
+        else if (addressVisible && isParent && parent.Address is null)
+        {
+            if (!string.IsNullOrEmpty(parent.AddressId)) // This person has an address, load it.
+            {
+                var address = await MiscellaneousService.GetAddressAsync(parent.AddressId.ToString());
+                parent.Address = new ParentAddress
+                {
+                    Line1 = address.Line1,
+                    Line2 = address.Line2,
+                    Town = address.Town,
+                    State = address.State,
+                    Country = address.Country,
+                    ParentId = parent.Id
+                };
+
+                add_RemoveAddressButtonLabel = "Remove";
+            }
+            else
+            {
+                add_RemoveAddressButtonLabel = "Add";
+            }
+        }
+    }
+
+    private async Task UpdateProfileAsync()
+    {
+        busy = true;
+
+        if (isTeacher)
+        {
+            await TeacherService.UpdateAsync(teacher);
+        }
+        else if (isParent)
+        {
+            await ParentService.UpdateAsync(parent);
+        }
+
+        Toaster.Add("Your request is being processed.", MatToastType.Info, "Request Processing", "info");
+
+        busy = false;
+    }
+
+}
+
+

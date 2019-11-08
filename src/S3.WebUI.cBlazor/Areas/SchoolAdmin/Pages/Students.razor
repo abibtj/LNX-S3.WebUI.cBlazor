@@ -1,0 +1,648 @@
+﻿@page "/schadm/students"
+@*@inject IConfiguration Configuration*@
+@inject HttpClient HttpClient
+@inject IStudentService StudentService
+@inject IClassService ClassService
+@inject IParentService ParentService
+@inject IMiscellaneousService MiscellaneousService
+@inject ILogger<Student> Logger
+@inject AppUser AppUser
+@inject IMatToaster Toaster
+
+<MatH5>Students</MatH5>
+<br />
+
+@if (!(students is null))
+{
+    @if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin) // School admin can add new students
+    {
+        <MatButton OnClick="ShowAddStudentDialogAsync" Icon="person_add">Add Student</MatButton>
+    }
+    <MatButton OnClick="LoadAsync" Icon="refresh">Refresh</MatButton>
+
+    <img class="@(busy? "show-gif": "hide-gif")" src="/images/loading.gif" />
+
+    <MatTable Items="@students" Striped="true">
+        <MatTableHeader>
+            <th>First Name</th>
+            <th>Middle Name</th>
+            <th>Last Name</th>
+            <th>Class</th>
+            <th>State</th>
+            <th>Parent</th>
+            <th></th>
+        </MatTableHeader>
+        <MatTableRow>
+            <td>@context.FirstName</td>
+            <td>@context.MiddleName</td>
+            <td>@context.LastName</td>
+            <td>@context.Class?.Name</td>
+            <td>@context.Address?.State</td>
+            <td>@context.Parent?.FirstName @context.Parent?.LastName</td>
+            <td>
+                @if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin) // School admin can edit students
+                {
+                    <MatIconButton OnClick="@(() => ShowUpdateSubjectsDialogAsync(context.Id))" Icon="subject" Attributes="@(new Dictionary<string, object>() { { "title", "Subjects" } })"></MatIconButton>
+                    <MatIconButton OnClick="@(() => ShowUpdateStudentsParentDialogAsync(context.Id))" Icon="person" Attributes="@(new Dictionary<string, object>() { { "title", "Parent" } })"></MatIconButton>
+                    <MatIconButton OnClick="@(() => ShowUpdateStudentDialogAsync(context.Id))" Icon="edit" Attributes="@(new Dictionary<string, object>() { { "title", "Edit Student's Information" } })"></MatIconButton>
+                    <MatIconButton OnClick="@(() => ShowDeleteStudentDialog(context.Id))" Icon="delete_forever" Attributes="@(new Dictionary<string, object>() { { "title", "Delete Student" } })"></MatIconButton>
+                    }
+            </td>
+        </MatTableRow>
+    </MatTable>
+}
+else if (loadFailed)
+{
+    <p><em>@errorMessage</em></p>
+    Toaster.Add(errorMessage, MatToastType.Danger, errorTitle, "error");
+}
+else
+{
+    <MatProgressBar Indeterminate="true"></MatProgressBar>
+}
+
+@*Add / Update Student*@
+@if (!(students is null) && (mode == Mode.Add || mode == Mode.Update))
+{
+    <EditForm Model="student" OnValidSubmit="@Add_UpdateAsync">
+        <PeterLeslieMorris.Blazor.Validation.Validate />
+        <MatDialog IsOpen="@addUpdateDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+
+            <MatDialogTitle>@add_UpdateTitle</MatDialogTitle>
+
+            <MatDialogContent>
+                <ValidationSummary />
+
+                @*Student properties*@
+                <div>
+
+                    <PersonDetailsComponent Person="student" DateOfBirthRequired="true"></PersonDetailsComponent>
+
+                    <div class="row mt-md-n5 pull-up">
+                        @*Pull this row up to match the last item displayed from the component*@
+                        <div class="form-group col-md-6 offset-md-6">
+                            <MatSelect @bind-Value="student.ClassId" Label="Class*" Required="true" Enhanced="true">
+                                @if (!(classes is null))
+                                {
+                                    @foreach (var _class in classes)
+                                    {
+                                        <MatOption Value="@_class.Id">@_class.Name</MatOption>
+                                    }
+                                }
+                            </MatSelect>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="form-group col-md-6">
+                            <MatSelect @bind-Value="student.SubjectsStatus" Label="Subjects" Enhanced="true" Disabled="true">
+                                <MatOption Value="All Class Subjects">All Class Subjects</MatOption>
+                                <MatOption Value="Selected Subjects">Selected Subjects</MatOption>
+                            </MatSelect>
+                        </div>
+                        <div class="form-group col-md-6">
+                        </div>
+                    </div>
+
+                </div>
+
+                <br />
+                @*Address*@
+                <MatAccordion>
+                    <MatExpansionPanel ExpandedChanged="ToggleAddressVisibilityAsync">
+                        <MatExpansionPanelSummary>
+                            <MatExpansionPanelHeader>Address</MatExpansionPanelHeader>
+                        </MatExpansionPanelSummary>
+                        <MatExpansionPanelDetails>
+                            <div class="row">
+                                <div class="form-group">
+                                    <MatButton Type="button" OnClick="Add_RemoveAddress">@add_RemoveAddressButtonLabel</MatButton>
+                                </div>
+                            </div>
+
+                            @if (!(student.Address is null))
+                            {
+                                <AddressComponent Address="student.Address"></AddressComponent>
+                            }
+                        </MatExpansionPanelDetails>
+                    </MatExpansionPanel>
+                </MatAccordion>
+
+
+            </MatDialogContent>
+
+            <MatDialogActions>
+                <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+                <MatButton Type="submit"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>@add_UpdateButtonLabel</MatButton>
+            </MatDialogActions>
+
+        </MatDialog>
+    </EditForm>
+}
+
+@*Add / Update Subject*@
+@if (!(student is null) && (mode == Mode.UpdateStudentSubjects))
+{
+    <MatDialog IsOpen="@subjectDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+
+        <MatDialogTitle>@student.FullName</MatDialogTitle>
+
+        <MatDialogContent>
+            <div class="form-group">
+                <MatAutocomplete Collection="availableSubjects" @bind-Value="selectedSubject" OnOpenedChanged="AddSubject" ItemType="string" Label="Select Subject" ShowClearButton="true"></MatAutocomplete>
+                <MatButton Type="button" OnClick="AddSubject" Icon="library_add">Add</MatButton>
+            </div>
+            <br />
+
+            <table class="table table-striped">
+                <tbody>
+                    @foreach (var subject in studentSubjects)
+                    {
+                        <tr>
+                            <td>@(studentSubjects.IndexOf(subject) + 1)</td>
+                            <td>@subject</td>
+                            <td>
+                                <MatIconButton OnClick="@(() => RemoveSubject(@subject))" Icon="delete_forever" Attributes="@(new Dictionary<string, object>() { { "title", "Remove Subject" } })"></MatIconButton>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </MatDialogContent>
+
+        <MatDialogActions>
+            <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+            <MatButton Type="button" OnClick="UpdateSubjectsAsync"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Update</MatButton>
+        </MatDialogActions>
+
+    </MatDialog>
+}
+
+@*Add / Update Student's Parent*@
+@if (!(student is null) && (mode == Mode.UpdateStudentParent))
+{
+    <MatDialog IsOpen="@parentDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+
+        <MatDialogTitle>@student.FullName</MatDialogTitle>
+
+        <MatDialogContent>
+            <br />
+            <p>Select Parent</p>
+            @if (searchedParent is null)
+            {
+                <div class="form-group">
+                    <MatSelect @bind-Value="student.ParentId" Label="Parent" Enhanced="true">
+                        <MatOption Value=""></MatOption>
+                        @foreach (var parent in parents)
+                        {
+                            <MatOption Value=@parent.Id>@parent.FullName</MatOption>
+                        }
+                    </MatSelect>
+                </div>
+                <br />
+                <p>Not on the list?</p>
+            }
+
+
+            @if (!string.IsNullOrEmpty(searchParentRegNumber) && hasSearchedForParent)
+            {
+                if (searchedParent is null)
+                {
+                    <p>No parent with Registration Number: '<strong>@searchParentRegNumber</strong>'  was found.</p>
+                }
+                else
+                {
+                    <p>@searchedParent.FullName <MatIconButton OnClick="RemoveSearchedParent" Icon="delete_forever" Attributes="@(new Dictionary<string, object>() { { "title", "Clear" } })"></MatIconButton></p>
+                }
+            }
+
+            <p>
+                <MatTextField OnFocusOut="SearchForParentAsync" @bind-Value="searchParentRegNumber" Label="Search by Reg. Number" Style="width:80%;"></MatTextField>
+                <MatIconButton OnClick="SearchForParentAsync" Icon="search" Attributes="@(new Dictionary<string, object>() { { "title", "Search for parent" } })"></MatIconButton>
+            </p>
+        </MatDialogContent>
+
+        <MatDialogActions>
+            <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+            <MatButton Type="button" OnClick="UpdateStudentsParentAsync"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Update</MatButton>
+        </MatDialogActions>
+
+    </MatDialog>
+}
+
+@*Delete Student*@
+@if (!(student is null) && (mode == Mode.Delete))
+{
+    <MatDialog IsOpen="@deleteDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="true">
+
+        <MatDialogTitle>Delete Student?</MatDialogTitle>
+
+        <MatDialogContent>
+            <br />
+            <div class="form-group">
+                <p>Are you sure you want to delete <strong>@student.FullName</strong> permanently?</p>
+            </div>
+            <br />
+        </MatDialogContent>
+
+        <MatDialogActions>
+            <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+            <MatButton @onclick="@(() => DeleteAsync(student.Id))"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Delete</MatButton>
+        </MatDialogActions>
+
+    </MatDialog>
+}
+
+
+@code {
+
+    #region variables
+
+    private Student[] students;
+    private Student student;
+    private Parent[] parents;
+    private Parent searchedParent;
+    private Class[] classes;
+    private Class _class;
+    private List<string> availableSubjects;
+    private List<string> studentSubjects;
+    private string selectedSubject;
+
+    private Mode mode = Mode.None;
+    private bool addUpdateDialogIsOpen;
+    private bool subjectDialogIsOpen;
+    private bool deleteDialogIsOpen;
+    private bool parentDialogIsOpen;
+    private bool busy;
+    private bool loadFailed;
+    private bool hasSearchedForParent;
+    private bool sessionExpired;
+
+    private string searchParentRegNumber;
+    private string add_UpdateTitle;
+    private string add_UpdateButtonLabel;
+    private string add_RemoveAddressButtonLabel;
+    private string errorTitle = "Error";
+    private string errorMessage = "Sorry, we could not load this resource due to an error. Please, try again later.";
+    #endregion
+
+
+    private void Add_RemoveAddress()
+    {
+        if (student.Address is null)
+        {
+            student.Address = new StudentAddress { StudentId = Guid.Empty.ToString(), Country = "Nigeria" };
+            add_RemoveAddressButtonLabel = "Remove";
+        }
+        else
+        {
+            student.Address = null;
+            student.AddressId = null;
+            add_RemoveAddressButtonLabel = "Add";
+        }
+    }
+
+    private void AddSubject()
+    {
+        if (!string.IsNullOrEmpty(selectedSubject) &&
+            !(studentSubjects.Contains(selectedSubject)) &&
+            availableSubjects.Contains(selectedSubject))
+        {
+            studentSubjects.Insert(0, selectedSubject);
+            availableSubjects.Remove(selectedSubject);
+            selectedSubject = null; // This enables auto clear of the UI component used for selection
+        }
+    }
+
+    private async Task Add_UpdateAsync()
+    {
+        //if (student.SubjectsStatus == "All Class Subjects")
+        //{
+        //student.OfferingAllClassSubjects = true;
+        //    }
+        //else if (student.SubjectsStatus == "Selected Subjects")
+        //{
+        //    student.OfferingAllClassSubjects = false;
+        //}
+
+        if (mode == Mode.Add)
+        {
+            // Populate the subject array of this student before saving
+            _class = classes.First(x => x.Id == student.ClassId);
+            student.SubjectsArray = _class.SubjectsArray;
+            student.OfferingAllClassSubjects = true;
+
+
+            await StudentService.CreateAsync(student);
+        }
+        else if (mode == Mode.Update)
+        {
+            await StudentService.UpdateAsync(student);
+        }
+
+        await LoadAsync();
+        CloseDialogs();
+        Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+    }
+
+    private void CloseDialogs()
+    {
+        addUpdateDialogIsOpen = false;
+        subjectDialogIsOpen = false;
+        parentDialogIsOpen = false;
+        deleteDialogIsOpen = false;
+        hasSearchedForParent = false;
+        searchParentRegNumber = string.Empty;
+        searchedParent = null;
+        student = null;
+        _class = null;
+        classes = null;
+        mode = Mode.None;
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        await StudentService.DeleteAsync(id);
+        await LoadAsync();
+        CloseDialogs();
+        Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+    }
+
+    private void DialogIsOpenChanged(bool isOpened)
+    {
+        if (!isOpened)
+        {
+            CloseDialogs();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        busy = true;
+
+        try
+        {
+            if (AppUser.IsSuperAdmin)
+            {
+                students = await StudentService.GetAllAsync();
+            }
+            else if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin)
+            {
+                students = await StudentService.GetAllAsync(schoolId: AppUser.SchoolId);
+            }
+            else
+            {
+                loadFailed = true;
+                errorMessage = "You are not authorised to view this resource.";
+            }
+
+        }
+        catch (System.Net.Http.HttpRequestException ex)
+        {
+            loadFailed = true;
+            (errorTitle, errorMessage, sessionExpired) = ErrorMessageHelper.GetMessage(ex);
+
+            if (sessionExpired)
+            {
+                try //TODO: Remove the following try catch block when globa error handling is implemented
+                {
+                    await AppUser.SignOutAsync();
+                }
+                catch (Exception e)
+                {
+                    Logger.LogWarning(e, "Unable to log user out.");
+                }
+            }
+
+            Logger.LogWarning(ex, "Failed to load resource.");
+        }
+        catch (Exception ex)
+        {
+            loadFailed = true;
+            Logger.LogWarning(ex, "Failed to load resource.");
+        }
+
+        busy = false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+        await AppUser.InitializeAsync();
+        await LoadAsync();
+        //StateHasChanged();
+    }
+
+    private void RemoveSearchedParent()
+    {
+        searchParentRegNumber = string.Empty;
+        searchedParent = null;
+        hasSearchedForParent = false;
+    }
+
+    private void RemoveSubject(string subject)
+    {
+        studentSubjects.Remove(subject);
+        availableSubjects.Add(subject);
+        availableSubjects.Sort();
+    }
+
+    private async Task SearchForParentAsync()
+    {
+        try
+        {
+            searchedParent = await ParentService.GetAsync(searchParentRegNumber);
+        }
+        catch (HttpRequestException)
+        {
+            //(errorTitle, errorMessage, sessionExpired) = ErrorMessageHelper.GetMessage(ex);
+        }
+
+        hasSearchedForParent = true;
+    }
+
+    private async Task ShowAddStudentDialogAsync()
+    {
+        busy = true;
+
+        classes = await ClassService.GetAllAsync(schoolId: AppUser.SchoolId);
+
+        student = new Student { SchoolId = AppUser.SchoolId, SubjectsStatus = "All Class Subjects" };
+        add_UpdateTitle = "Add Student";
+        add_UpdateButtonLabel = "Add";
+        add_RemoveAddressButtonLabel = "Add";
+        mode = Mode.Add;
+        addUpdateDialogIsOpen = true;
+
+        busy = false;
+    }
+
+     private void ShowDeleteStudentDialog(string id)
+    {
+        busy = true;
+
+        //student = await StudentService.GetAsync(id);
+        student = students.FirstOrDefault(x => x.Id == id);
+
+        mode = Mode.Delete;
+        deleteDialogIsOpen = true;
+
+        busy = false;
+    }
+
+    private async Task ShowUpdateStudentDialogAsync(string id)
+    {
+        busy = true;
+
+        //student = await StudentService.GetAsync(id);
+        student = students.FirstOrDefault(x => x.Id == id);
+        if (student.OfferingAllClassSubjects)
+        {
+            student.SubjectsStatus = "All Class Subjects";
+        }
+        else
+        {
+            student.SubjectsStatus = "Selected Subjects";
+        }
+
+        classes = await ClassService.GetAllAsync(schoolId: AppUser.SchoolId);
+        add_UpdateTitle = "Update Student";
+        add_UpdateButtonLabel = "Update";
+        mode = Mode.Update;
+        addUpdateDialogIsOpen = true;
+
+        busy = false;
+    }
+
+    private async Task ShowUpdateSubjectsDialogAsync(string id)
+    {
+        busy = true;
+
+        //student = await StudentService.GetAsync(id);
+        student = students.FirstOrDefault(x => x.Id == id);
+        _class = await ClassService.GetAsync(student.ClassId);
+
+        if (student.OfferingAllClassSubjects)
+        {
+            studentSubjects = _class.SubjectsArray.ToList();
+        }
+        else
+        {
+            studentSubjects = student.SubjectsArray.ToList();
+        }
+
+        // Load subjects from json file
+        availableSubjects = await HttpClient.GetJsonAsync<List<string>>($"json-data/subjects/{_class.Category}.json");
+
+        foreach (var sub in studentSubjects)
+        {
+            availableSubjects.Remove(sub);
+        }
+
+        mode = Mode.UpdateStudentSubjects;
+        subjectDialogIsOpen = true;
+
+        busy = false;
+    }
+
+    private async Task ShowUpdateStudentsParentDialogAsync(string id)
+    {
+        busy = true;
+
+        //student = await StudentService.GetAsync(id);
+        student = students.FirstOrDefault(x => x.Id == id);
+        parents = await ParentService.GetAllAsync(schoolId: AppUser.SchoolId);
+
+        mode = Mode.UpdateStudentParent;
+        parentDialogIsOpen = true;
+
+        busy = false;
+    }
+
+    private async Task ToggleAddressVisibilityAsync(bool addressVisible)
+    {
+        if (addressVisible && student.Address is null)
+        {
+            if (!string.IsNullOrEmpty(student.AddressId)) // This person has an address, load it.
+            {
+                var address = await MiscellaneousService.GetAddressAsync(student.AddressId.ToString());
+                student.Address = new StudentAddress
+                {
+                    Line1 = address.Line1,
+                    Line2 = address.Line2,
+                    Town = address.Town,
+                    State = address.State,
+                    Country = address.Country,
+                    StudentId = student.Id
+                };
+
+                add_RemoveAddressButtonLabel = "Remove";
+            }
+            else
+            {
+                add_RemoveAddressButtonLabel = "Add";
+            }
+        }
+    }
+
+    private async Task UpdateStudentsParentAsync()
+    {
+        busy = true;
+
+        try
+        {
+            if (!(searchedParent is null))
+            {
+                student.ParentId = searchedParent.Id;
+            }
+
+            await StudentService.UpdateAsync(student);
+
+            CloseDialogs();
+            Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+        }
+        catch (HttpRequestException ex)
+        {
+            (errorTitle, errorMessage, sessionExpired) = ErrorMessageHelper.GetMessage(ex);
+            Toaster.Add(errorMessage, MatToastType.Danger, errorTitle, "error");
+            Logger.LogWarning(ex, "Failed to update item.");
+        }
+
+        busy = false;
+    }
+
+    private async Task UpdateSubjectsAsync()
+    {
+        busy = true;
+
+        if (studentSubjects.Except(_class.SubjectsArray).Any()
+        || _class.SubjectsArray.Except(studentSubjects).Any())
+        {
+            student.OfferingAllClassSubjects = false;
+        }
+        else
+        {
+            student.OfferingAllClassSubjects = true;
+        }
+
+        student.SubjectsArray = studentSubjects.ToArray();
+
+        //student.Class = null!; // Student's class's Id is enough, no need sending their class back to the backend api
+
+        try
+        {
+            await StudentService.UpdateAsync(student);
+
+            subjectDialogIsOpen = false;
+            mode = Mode.None;
+            Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+        }
+        catch (HttpRequestException ex)
+        {
+            (errorTitle, errorMessage, sessionExpired) = ErrorMessageHelper.GetMessage(ex);
+            Toaster.Add(errorMessage, MatToastType.Danger, errorTitle, "error");
+            Logger.LogWarning(ex, "Failed to update item.");
+        }
+
+        busy = false;
+    }
+
+}

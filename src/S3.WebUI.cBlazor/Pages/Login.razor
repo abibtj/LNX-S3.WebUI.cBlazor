@@ -1,0 +1,74 @@
+﻿@page "/login"
+@inject NavigationManager NavigationManager
+@inject AppUser AppUser
+@inject IMatToaster Toaster
+
+
+@if (!(signIn is null))
+{
+    <EditForm Model="signIn" OnValidSubmit="SignInAsync">
+        <PeterLeslieMorris.Blazor.Validation.Validate />
+
+        <br />
+
+        <div class="row">
+            <div class="col-md-4 offset-md-4 mat-elevation-z24">
+                <MatH6>Log In</MatH6>
+                <br />
+
+                <p><MatTextField @bind-Value="signIn.Username" Label="Username" Icon="person" IconTrailing="true" FullWidth="true" Required="true"></MatTextField></p>
+
+                <p><MatTextField @bind-Value="signIn.Password" Label="Password" Type="@(showPassword ? "text" : "password")" IconOnClick="ToggleShowPassword" Icon="@(showPassword ? "radio_button_unchecked" : "remove_red_eye")" IconTrailing="true" FullWidth="true" Required="true"></MatTextField></p>
+
+                <br />
+                <MatDialogActions> @*To push the buttons to the right*@
+                    <MatButton Type="button" OnClick="GoHome">Back</MatButton>
+                    <MatButton Type="submit"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Log in</MatButton>
+            </MatDialogActions>
+                </div>
+        </div>
+
+    </EditForm>
+}
+
+@code{
+
+     private bool busy;
+     private bool showPassword;
+     private SignIn signIn;
+
+    private void GoHome()
+    {
+        // Reset fields to their defaults
+        showPassword = false;
+        signIn = null;
+
+        NavigationManager.NavigateTo("");
+    }
+
+    protected override async Task OnInitializedAsync()
+        => signIn = new SignIn();
+
+    private async Task SignInAsync()
+    {
+        busy = true;
+
+        try
+        {
+            await AppUser.SingInAsycn(signIn);
+            NavigationManager.NavigateTo("schadm/students"); // Signed in successfully
+        }
+        catch (Exception)
+        {
+            Toaster.Add("Unable to log you in. Please, enter correct username and password.", MatToastType.Danger, "Log In Failed", "error");
+        }
+
+        busy = false;
+    }
+
+    private void ToggleShowPassword()
+       => showPassword = !showPassword;
+}
+
+
+

@@ -1,0 +1,348 @@
+﻿@page "/t/scores-entry"
+@inject IScoresEntryTaskService ScoresEntryTaskService
+@inject IStudentScoreService StudentScoreService
+@inject IStudentService StudentService
+@inject ILogger<ScoresEntry> Logger
+@inject AppUser AppUser
+@inject IMatToaster Toaster
+
+<MatH5>Scores Entry</MatH5>
+<br />
+
+@if (!(scoresEntryTasks is null))
+{
+    <MatSelect @bind-Value="term" Label="Term*" Required="true" Enhanced="true">
+        <MatOption Value="1">First Term</MatOption>
+        <MatOption Value="2">Second Term</MatOption>
+        <MatOption Value="3">Third Term</MatOption>
+    </MatSelect>
+
+    <MatSelect @bind-Value="examType" Label="Exam Type*" Required="true" Enhanced="true">
+        <MatOption Value="Continuos Assessment">Continuos Assessment (CA)</MatOption>
+        <MatOption Value="First Exam">First Exam</MatOption>
+        <MatOption Value="Second Exam">Second Exam</MatOption>
+        <MatOption Value="Class Activities">Class Activities</MatOption>
+        <MatOption Value="Homework">Homework</MatOption>
+    </MatSelect>
+
+    <MatDatePicker @bind-Value="session" Label="Session"></MatDatePicker>
+
+    <img class="@(busy? "show-gif": "hide-gif")" src="/images/loading.gif" />
+
+    <MatTable Items="@scoresEntryTasks" Striped="true">
+        <MatTableHeader>
+            <th>Class</th>
+            <th>Subject</th>
+            <th>Teacher</th>
+            <th>Due Date</th>
+            <th></th>
+        </MatTableHeader>
+        <MatTableRow>
+            <td>@context.ClassName</td>
+            <td>@context.Subject</td>
+            <td>@context.TeacherName</td>
+            <td>@context.DueDate?.ToShortDateString()</td>
+            <td>
+                <MatIconButton OnClick="@(() => ShowScoresEnteryDialogAsync(context.Id))" Icon="edit" Attributes="@(new Dictionary<string, object>() { { "title", "Enter or Update Scores" } })"></MatIconButton>
+            </td>
+        </MatTableRow>
+    </MatTable>
+}
+else if (loadFailed)
+{
+    <p><em>@errorMessage</em></p>
+    Toaster.Add(errorMessage, MatToastType.Danger, errorTitle, "error");
+}
+else
+{
+    <MatProgressBar Indeterminate="true"></MatProgressBar>
+}
+
+@*Add / Update Scores*@
+@if (!(classSubjectScores is null) && (mode == Mode.Add || mode == Mode.Update))
+@*@if (!(classSubjectScores is null))*@
+{
+    <EditForm Model="classSubjectScores" OnValidSubmit="Add_UpdateAsync">
+        <PeterLeslieMorris.Blazor.Validation.Validate />
+        <MatDialog IsOpen="scoresEntryDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+
+            <MatDialogTitle> @task.Subject - @task.ClassName</MatDialogTitle>
+
+            <MatDialogContent>
+                <p>Term: @term</p>
+                <p>Type: @examType</p>
+                <p>Session: @session?.Date.Year</p>
+
+                <hr />
+                <ValidationSummary />
+
+                @if (scoresExist)
+                {
+                    <div class="row">
+                        <div class="form-group col-sm-1">
+                           S/N
+                        </div>
+                        <div class="form-group col-sm-8">
+                           Name
+                        </div>
+                        <div class="form-group col-sm-3">
+                            Score
+                        </div>
+                    </div>
+
+                    <hr />
+
+                    foreach (var score in classSubjectScores.StudentScores)
+                    {
+                        <div class="row">
+                            <div class="form-group col-sm-1">
+                                @(classSubjectScores.StudentScores.IndexOf(score) + 1).
+                            </div>
+                            <div class="form-group col-sm-8">
+                                @score.StudentName
+                            </div>
+                            <div class="form-group col-sm-3">
+                                <input @bind-value="score.Mark" class="form-control" />
+                            </div>
+                        </div>
+                    }
+                }
+                else
+                {
+                    <div class="row">
+                        <div class="form-group col-md-12">
+                            No score was found for this session.
+                        </div>
+                    </div>
+                }
+
+
+            </MatDialogContent>
+
+            <MatDialogActions>
+                <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+                @if (scoresExist)
+                {
+                    <MatButton Type="submit"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Save</MatButton>
+                }
+            </MatDialogActions>
+
+        </MatDialog>
+    </EditForm>
+}
+
+@code {
+
+    #region variables
+
+    private ScoresEntryTask[] scoresEntryTasks;
+    private ScoresEntryTask task; // The current ScoresEntryTask being worked on
+    private ClassSubjectScores classSubjectScores;
+    //private List<Student> studentsOfferingSubject;
+
+    private Mode mode = Mode.None;
+    private bool scoresEntryDialogIsOpen;
+    private bool busy;
+    private bool loadFailed;
+    private bool scoresExist;
+    private bool sessionExpired;
+
+    private string term; // To be typecast to int
+    private string examType;
+    private DateTime? session = DateTime.UtcNow;
+    private string errorTitle = "Error";
+    private string errorMessage = "Sorry, we could not load this resource due to an error. Please, try again later.";
+    #endregion
+
+
+    private async Task Add_UpdateAsync()
+    {
+        busy = true;
+
+        if (mode == Mode.Add)
+        {
+            await StudentScoreService.CreateAsync(classSubjectScores);
+        }
+        else if (mode == Mode.Update)
+        {
+            await StudentScoreService.UpdateAsync(classSubjectScores);
+        }
+
+        await LoadAsync();
+        CloseDialogs();
+        Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+
+        busy = false;
+    }
+
+    private void CloseDialogs()
+    {
+        // Reset fields to their defaults
+        scoresEntryDialogIsOpen = false;
+        scoresExist = false;
+        task = null;
+
+        mode = Mode.None;
+    }
+
+    private void DialogIsOpenChanged(bool isOpened)
+    {
+        if (!isOpened)
+        {
+            CloseDialogs();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        busy = true;
+
+        try
+        {
+            if (AppUser.IsTeacher)
+            {
+                scoresEntryTasks = await ScoresEntryTaskService.GetAllForTeacherAsync(schoolId: AppUser.SchoolId, teacherId: AppUser.Id);
+            }
+            else
+            {
+                loadFailed = true;
+                errorMessage = "You are not authorised to view this resource.";
+            }
+        }
+        catch (System.Net.Http.HttpRequestException ex)
+        {
+            loadFailed = true;
+            (errorTitle, errorMessage, sessionExpired) = ErrorMessageHelper.GetMessage(ex);
+
+            if (sessionExpired)
+            {
+                try //TODO: Remove the following try catch block when globa error handling is implemented
+                {
+                    await AppUser.SignOutAsync();
+                }
+                catch (Exception e)
+                {
+                    Logger.LogWarning(e, "Unable to log user out.");
+                }
+            }
+
+            Logger.LogWarning(ex, "Failed to load resource.");
+        }
+        catch (Exception ex)
+        {
+            loadFailed = true;
+            Logger.LogWarning(ex, "Failed to load resource.");
+        }
+
+        busy = false;
+    }
+
+    protected override async Task OnInitializedAsync()
+    {
+
+        await AppUser.InitializeAsync();
+        await LoadAsync();
+        //StateHasChanged();
+    }
+
+    private async Task ShowScoresEnteryDialogAsync(string id)
+    {
+        if (string.IsNullOrEmpty(term))
+        {
+            Toaster.Add("Term must be selected", MatToastType.Danger, "Invalid Term", "error");
+        }
+        else if (string.IsNullOrEmpty(examType))
+        {
+            Toaster.Add("Exam type must be selected", MatToastType.Danger, "Invalid Exam Type", "error");
+        }
+        else
+        {
+            busy = true;
+
+            // TODO: This year or last year is still current session
+            bool isCurrentSession = (session?.Date.Year == DateTime.Now.Year);// || (session?.Date.Year == DateTime.Now.Year - 1);
+
+            classSubjectScores = new ClassSubjectScores();
+            var studentScores = new List<StudentScore>();
+            Student[] studentsOfferingSubject;
+
+            //task = await ScoresEntryTaskService.GetAsync(id);
+            task = scoresEntryTasks.FirstOrDefault(x => x.Id == id);
+
+            var existingScores = await StudentScoreService.GetAllAsync(schoolId: task.SchoolId, classId: task.ClassId,
+                subject: task.Subject, examType: examType, term: int.Parse(term), session: session?.Date.Year);
+
+            if (!(existingScores is null) && existingScores.Length > 0)
+            {
+                mode = Mode.Update;
+                studentScores = existingScores.ToList();
+
+                // If it is still the current session, check if there's any new students whose scores have not been previously added and add their scores.
+                if (isCurrentSession)
+                {
+                    studentsOfferingSubject = await StudentService.GetAllAsync(schoolId: task.SchoolId, classId: task.ClassId, subject: task.Subject);
+
+                    var studentsOfferingSubject_Ids = new HashSet<string>(studentsOfferingSubject.Select(x => x.Id));
+                    var existingScores_StudentIds = new HashSet<string>(existingScores.Select(x => x.StudentId));
+
+                    foreach (var _id in studentsOfferingSubject_Ids)
+                    {
+                        if (!(existingScores_StudentIds.Contains(_id))) // No score has been added for this student, add it
+                        {
+                            var student = studentsOfferingSubject.FirstOrDefault(x => x.Id == _id);
+
+                            studentScores.Add(new StudentScore
+                            {
+                                ClassId = task.ClassId,
+                                ClassName = task.ClassName,
+                                ExamType = examType,
+                                SchoolId = task.SchoolId,
+                                Session = session?.Date.Year ?? 2000,
+                                StudentId = student.Id,
+                                StudentName = student.FullName,
+                                Subject = task.Subject,
+                                Term = int.Parse(term)
+                            });
+                        }
+                    }
+                }
+            }
+            else if (isCurrentSession)
+            {
+                mode = Mode.Add;
+                studentsOfferingSubject = await StudentService.GetAllAsync(schoolId: task.SchoolId, classId: task.ClassId, subject: task.Subject);
+
+                foreach (var student in studentsOfferingSubject)
+                {
+                    studentScores.Add(new StudentScore
+                    {
+                        ClassId = task.ClassId,
+                        ClassName = task.ClassName,
+                        ExamType = examType,
+                        SchoolId = task.SchoolId,
+                        Session = session?.Date.Year ?? 2000,
+                        StudentId = student.Id,
+                        StudentName = student.FullName,
+                        Subject = task.Subject,
+                        Term = int.Parse(term)
+                    });
+                }
+            }
+            else
+            {
+                mode = Mode.Add;
+            }
+
+            if (studentScores.Count > 0) // There are scores to be added or updated
+            {
+                classSubjectScores.StudentScores = studentScores.OrderBy(x => x.StudentName).ToList();
+                scoresExist = true;
+            }
+
+            scoresEntryDialogIsOpen = true;
+
+            busy = false;
+        }
+    }
+
+}

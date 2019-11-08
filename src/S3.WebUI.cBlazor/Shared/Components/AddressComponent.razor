@@ -1,0 +1,78 @@
+﻿@inject HttpClient HttpClient 
+
+
+    <div class="row">
+        <div class="form-group col-md-12">
+            <MatTextField @bind-Value="Address.Line1" Label="Address" Required="true" Style="width:100%;"></MatTextField>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-md-12">
+            <MatTextField @bind-Value="Address.Line2" Label="Address" Style="width:100%;"></MatTextField>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-md-12">
+            <MatTextField @bind-Value="Address.Town" Label="Town / City" Required="true" Style="width:100%;"></MatTextField>
+        </div>
+    </div>
+    <div class="row">
+        <div class="form-group col-md-6">
+            @*<MatSelect @bind-Value="Address.State" Label="State*" Required="true" Enhanced="true">*@
+            <MatSelect Value="@state" ValueChanged="ChangeState" Label="State*" Required="true" Enhanced="true">
+                @if (!(states is null))
+                {
+                    @foreach (var state in states)
+                    {
+                        <MatOption Value="@state">@state</MatOption>
+                    }
+                }
+            </MatSelect>
+        </div>
+        <div class="form-group col-md-6">
+            @*<MatSelect @bind-Value="Address.Country" Label="Country*" Required="true" Enhanced="true">*@
+            <MatSelect Value="@country" ValueChanged="ChangeCountry" Label="Country*" Required="true" Enhanced="true">
+                @if (!(countries is null))
+                {
+                    @foreach (var country in countries)
+                    {
+                        <MatOption Value="@country">@country</MatOption>
+                    }
+                }
+            </MatSelect>
+        </div>
+    </div>
+
+
+@code {
+
+    private List<string> states;
+    private string state;
+    private List<string> countries;
+    private string country;
+
+    [Parameter] public Address Address { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load states and countries from json files
+        states = await HttpClient.GetJsonAsync<List<string>>("json-data/states.json");
+        countries = await HttpClient.GetJsonAsync<List<string>>("json-data/countries.json");
+
+        state = Address.State;
+        country = Address.Country;
+    }
+
+    private void ChangeState(string selectedState)
+    {
+        state = selectedState;
+        Address.State = selectedState;
+    }
+   
+    private void ChangeCountry(string selectedCountry)
+    {
+        country = selectedCountry;
+        Address.Country = selectedCountry;
+    }
+
+}
