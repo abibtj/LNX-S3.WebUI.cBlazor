@@ -12,6 +12,6 @@
 //    public interface IClassSubjectScoresService : IGenericService<ClassSubjectScores, Record>
 //    {
 //        //Task<ClassSubjectScores> FindAsync(string? schoolId, string? classId, string? subject, string? examType,
-//        //    int? term, int? session, string[]? include = null);
+//        //    string? term, int? session, string[]? include = null);
 //    }
 //}

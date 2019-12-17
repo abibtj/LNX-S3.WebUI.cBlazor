@@ -12,7 +12,7 @@
             {
             <div class="form-group">
                 @* TODO: User searchable select because available student list may be very large *@
-                <S3MatAutoComplete Collection="availableStudents" OnOpenedChanged="AddStudent" @bind-Value="selectedStudent" ItemType="Student" CustomStringSelector="@(x => x.FullName)" Label="Select Student" ShowClearButton="true"></S3MatAutoComplete>
+                <MatAutocompleteList TItem="Student" Items="availableStudents" OnOpenedChanged="AddStudent" @bind-Value="selectedStudent" CustomStringSelector="@(x => x.FullName)" Label="Select Student" ShowClearButton="true"></MatAutocompleteList>
                 <MatButton Type="button" OnClick="AddStudent" Icon="person_add">Add</MatButton>
             </div>
                 <br />

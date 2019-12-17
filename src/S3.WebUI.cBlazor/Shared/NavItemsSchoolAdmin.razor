@@ -1,8 +1,30 @@
 ﻿
-<MatNavItem Href="schadm/classes"><MatIcon Icon="people"></MatIcon>&nbsp; Classes</MatNavItem>
-<MatNavItem Href="schadm/teachers"><MatIcon Icon="people"></MatIcon>&nbsp; Teachers</MatNavItem>
-<MatNavItem Href="schadm/students"><MatIcon Icon="people_outline"></MatIcon>&nbsp; Students</MatNavItem>
-<MatNavItem Href="schadm/parents"><MatIcon Icon="people_outline"></MatIcon>&nbsp; Parents</MatNavItem>
-<MatNavItem Href="schadm/scores-entry-tasks"><MatIcon Icon="people_outline"></MatIcon>&nbsp; Scores Entry</MatNavItem>
-<MatNavItem Href="schadm/scores"><MatIcon Icon="people_outline"></MatIcon>&nbsp; Scores</MatNavItem>
+<MatNavSubMenu Expanded="true">
+    <MatNavSubMenuHeader>
+        <MatNavItem AllowSelection="false"><MatIcon Icon="school"></MatIcon>&nbsp; My School</MatNavItem>
+    </MatNavSubMenuHeader>
+    <MatDivider></MatDivider>
 
+    <MatNavSubMenuList>
+        <MatNavItem Href="schadm/classes">Classes</MatNavItem>
+        <MatNavItem Href="schadm/teachers">Teachers</MatNavItem>
+        <MatNavItem Href="schadm/students">Students</MatNavItem>
+        <MatNavItem Href="schadm/parents">Parents</MatNavItem>
+        <MatNavItem Href="schadm/scores">Scores</MatNavItem>
+    </MatNavSubMenuList>
+</MatNavSubMenu>
+<MatDivider></MatDivider>
+
+<MatNavSubMenu Expanded="true">
+    <MatNavSubMenuHeader>
+        <MatNavItem AllowSelection="false"><MatIcon Icon="work"></MatIcon>&nbsp; Tasks</MatNavItem>
+    </MatNavSubMenuHeader>
+    <MatDivider></MatDivider>
+
+    <MatNavSubMenuList>
+        <MatNavItem Href="schadm/scores-entry-tasks">Scores Entry</MatNavItem>
+        <MatNavItem Href="">Other Tasks</MatNavItem>
+        <MatNavItem Href="schadm/rules">Rules</MatNavItem>
+    </MatNavSubMenuList>
+</MatNavSubMenu>
+<MatDivider></MatDivider>

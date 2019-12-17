@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "C:\\Users\\Abeeb\\Documents\\S3.WebUI.cBlazor\\S3.WebUI.cBlazor.csproj": {}
+    "C:\\Users\\Abeeb\\Documents\\Visual Studio 2019\\Projects\\S3\\LNX-S3.WebUI.cBlazor\\src\\S3.WebUI.cBlazor\\S3.WebUI.cBlazor.csproj": {}
   },
   "projects": {
-    "C:\\Users\\Abeeb\\Documents\\S3.WebUI.cBlazor\\S3.WebUI.cBlazor.csproj": {
+    "C:\\Users\\Abeeb\\Documents\\Visual Studio 2019\\Projects\\S3\\LNX-S3.WebUI.cBlazor\\src\\S3.WebUI.cBlazor\\S3.WebUI.cBlazor.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "C:\\Users\\Abeeb\\Documents\\S3.WebUI.cBlazor\\S3.WebUI.cBlazor.csproj",
+        "projectUniqueName": "C:\\Users\\Abeeb\\Documents\\Visual Studio 2019\\Projects\\S3\\LNX-S3.WebUI.cBlazor\\src\\S3.WebUI.cBlazor\\S3.WebUI.cBlazor.csproj",
         "projectName": "S3.WebUI.cBlazor",
-        "projectPath": "C:\\Users\\Abeeb\\Documents\\S3.WebUI.cBlazor\\S3.WebUI.cBlazor.csproj",
+        "projectPath": "C:\\Users\\Abeeb\\Documents\\Visual Studio 2019\\Projects\\S3\\LNX-S3.WebUI.cBlazor\\src\\S3.WebUI.cBlazor\\S3.WebUI.cBlazor.csproj",
         "packagesPath": "C:\\Users\\Abeeb\\.nuget\\packages\\",
-        "outputPath": "C:\\Users\\Abeeb\\Documents\\S3.WebUI.cBlazor\\obj\\",
+        "outputPath": "C:\\Users\\Abeeb\\Documents\\Visual Studio 2019\\Projects\\S3\\LNX-S3.WebUI.cBlazor\\src\\S3.WebUI.cBlazor\\obj\\",
         "projectStyle": "PackageReference",
         "fallbackFolders": [
           "C:\\Program Files\\dotnet\\sdk\\NuGetFallbackFolder"
@@ -21,7 +21,7 @@
           "C:\\Program Files (x86)\\NuGet\\Config\\Microsoft.VisualStudio.Offline.config"
         ],
         "originalTargetFrameworks": [
-          "netstandard2.0"
+          "netstandard2.1"
         ],
         "sources": {
           "C:\\Program Files (x86)\\Microsoft SDKs\\NuGetPackages\\": {},
@@ -29,7 +29,7 @@
           "https://api.nuget.org/v3/index.json": {}
         },
         "frameworks": {
-          "netstandard2.0": {
+          "netstandard2.1": {
             "projectReferences": {}
           }
         },
@@ -40,11 +40,11 @@
         }
       },
       "frameworks": {
-        "netstandard2.0": {
+        "netstandard2.1": {
           "dependencies": {
             "Blazor.FlexGrid": {
               "target": "Package",
-              "version": "[0.8.8, )"
+              "version": "[0.10.0, )"
             },
             "Blazored.LocalStorage": {
               "target": "Package",
@@ -52,43 +52,41 @@
             },
             "MatBlazor": {
               "target": "Package",
-              "version": "[1.10.1, )"
+              "version": "[2.0.0, )"
             },
             "Microsoft.AspNetCore.Blazor": {
               "target": "Package",
-              "version": "[3.1.0-preview1.19508.20, )"
+              "version": "[3.1.0-preview4.19579.2, )"
             },
             "Microsoft.AspNetCore.Blazor.Build": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[3.1.0-preview1.19508.20, )"
+              "version": "[3.1.0-preview4.19579.2, )"
             },
             "Microsoft.AspNetCore.Blazor.DevServer": {
               "suppressParent": "All",
               "target": "Package",
-              "version": "[3.1.0-preview1.19508.20, )"
+              "version": "[3.1.0-preview4.19579.2, )"
             },
             "Microsoft.AspNetCore.Blazor.HttpClient": {
               "target": "Package",
-              "version": "[3.1.0-preview1.19508.20, )"
+              "version": "[3.1.0-preview4.19579.2, )"
             },
             "Microsoft.Extensions.Configuration.Json": {
               "target": "Package",
-              "version": "[3.0.0, )"
+              "version": "[3.1.0, )"
             },
             "Microsoft.VisualStudio.Azure.Containers.Tools.Targets": {
               "target": "Package",
               "version": "[1.9.5, )"
             },
-            "NETStandard.Library": {
-              "suppressParent": "All",
-              "target": "Package",
-              "version": "[2.0.3, )",
-              "autoReferenced": true
-            },
             "PeterLeslieMorris.Blazor.FluentValidation": {
               "target": "Package",
-              "version": "[1.0.0, )"
+              "version": "[1.1.0-dotnetcore3.1.0-preview3.19555.2, )"
+            },
+            "PuppeteerSharp": {
+              "target": "Package",
+              "version": "[2.0.0, )"
             }
           },
           "imports": [
@@ -101,7 +99,12 @@
           ],
           "assetTargetFallback": true,
           "warn": true,
-          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.100-preview1-014459\\RuntimeIdentifierGraph.json"
+          "frameworkReferences": {
+            "NETStandard.Library": {
+              "privateAssets": "all"
+            }
+          },
+          "runtimeIdentifierGraphPath": "C:\\Program Files\\dotnet\\sdk\\3.1.100\\RuntimeIdentifierGraph.json"
         }
       }
     }

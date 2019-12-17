@@ -17,26 +17,26 @@
         </div>
     </div>
     <div class="row">
-        <div class="form-group col-md-6">
-            @*<MatSelect @bind-Value="Address.State" Label="State*" Required="true" Enhanced="true">*@
-            <MatSelect Value="@state" ValueChanged="ChangeState" Label="State*" Required="true" Enhanced="true">
+        <div class="form-group col-md-6">n
+            <MatSelect TValue="string" @bind-Value="Address.State" Label="State*" Required="true" Enhanced="true">
+            @*<MatSelect TValue="string" Value="@state" ValueChanged="ChangeState" Label="State*" Required="true" Enhanced="true">*@
                 @if (!(states is null))
                 {
                     @foreach (var state in states)
                     {
-                        <MatOption Value="@state">@state</MatOption>
+                        <MatOptionString Value="@state">@state</MatOptionString>
                     }
                 }
             </MatSelect>
         </div>
         <div class="form-group col-md-6">
-            @*<MatSelect @bind-Value="Address.Country" Label="Country*" Required="true" Enhanced="true">*@
-            <MatSelect Value="@country" ValueChanged="ChangeCountry" Label="Country*" Required="true" Enhanced="true">
+            <MatSelect TValue="string" @bind-Value="Address.Country" Label="Country*" Required="true" Enhanced="true">
+            @*<MatSelect TValue="string" Value="@country" ValueChanged="ChangeCountry" Label="Country*" Required="true" Enhanced="true">*@
                 @if (!(countries is null))
                 {
                     @foreach (var country in countries)
                     {
-                        <MatOption Value="@country">@country</MatOption>
+                        <MatOptionString Value="@country">@country</MatOptionString>
                     }
                 }
             </MatSelect>
@@ -47,9 +47,9 @@
 @code {
 
     private List<string> states;
-    private string state;
+    //private string state;
     private List<string> countries;
-    private string country;
+    //private string country;
 
     [Parameter] public Address Address { get; set; }
 
@@ -59,20 +59,20 @@
         states = await HttpClient.GetJsonAsync<List<string>>("json-data/states.json");
         countries = await HttpClient.GetJsonAsync<List<string>>("json-data/countries.json");
 
-        state = Address.State;
-        country = Address.Country;
+        //state = Address.State;
+        //country = Address.Country;
     }
 
-    private void ChangeState(string selectedState)
-    {
-        state = selectedState;
-        Address.State = selectedState;
-    }
-   
-    private void ChangeCountry(string selectedCountry)
-    {
-        country = selectedCountry;
-        Address.Country = selectedCountry;
-    }
+    //private void ChangeState(string selectedState)
+    //{
+    //    state = selectedState;
+    //    Address.State = selectedState;
+    //}
+
+    //private void ChangeCountry(string selectedCountry)
+    //{
+    //    country = selectedCountry;
+    //    Address.Country = selectedCountry;
+    //}
 
 }

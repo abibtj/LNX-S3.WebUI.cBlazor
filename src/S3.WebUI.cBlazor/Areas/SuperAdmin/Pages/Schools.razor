@@ -21,9 +21,9 @@
 
     <img class="@(busy? "show-gif": "hide-gif")" src="/images/loading.gif" />
 
-    @*<GridView DataAdapter="@schoolStats" PageSize="10"></GridView>*@
+    <GridView DataAdapter="@schoolStats" PageSize="10"></GridView>
 
-    <MatTable Items="@schoolStats" Striped="true">
+    @*<MatTable Items="@schoolStats" Striped="true">
             <MatTableHeader>
                 <th>Name</th>
                 <th>Location</th>
@@ -49,7 +49,7 @@
                     <MatIconButton OnClick="@(() => ShowDeleteSchoolDialogAsync(context.Id))" Icon="delete_forever" Attributes="@(new Dictionary<string, object>() { { "title", "Delete School" } })"></MatIconButton>
                 </td>
             </MatTableRow>
-        </MatTable>
+        </MatTable>*@
 }
 else if (loadFailed)
 {
@@ -66,7 +66,7 @@ else
 {
     <EditForm Model="school" OnValidSubmit="Add_UpdateAsync">
         <PeterLeslieMorris.Blazor.Validation.Validate />
-        <MatDialog IsOpen="@addUpdateDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+        <MatDialog IsOpen="@addUpdateDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="false">
 
             <MatDialogTitle>@add_UpdateTitle</MatDialogTitle>
 
@@ -80,13 +80,13 @@ else
                             <MatTextField @bind-Value="school.Name" Label="Name" Required="true"></MatTextField>
                         </div>
                         <div class="form-group col-md-6">
-                            <MatSelect @bind-Value="school.Category" Label="Category*" Required="true" Enhanced="true">
-                                <MatOption Value="Nursery">Nursery</MatOption>
-                                <MatOption Value="Primary">Primary</MatOption>
-                                <MatOption Value="Secondary">Secondary</MatOption>
-                                <MatOption Value="Nursery and Primary">Nursery and Primary</MatOption>
-                                <MatOption Value="Nursery, Primary and Secondary">Nursery, Primary and Secondary</MatOption>
-                                <MatOption Value="Others">Others</MatOption>
+                            <MatSelect TValue="string" @bind-Value="school.Category" Label="Category*" Required="true" Enhanced="true">
+                                <MatOptionString Value="Nursery">Nursery</MatOptionString>
+                                <MatOptionString Value="Primary">Primary</MatOptionString>
+                                <MatOptionString Value="Secondary">Secondary</MatOptionString>
+                                <MatOptionString Value="Nursery and Primary">Nursery and Primary</MatOptionString>
+                                <MatOptionString Value="Nursery, Primary and Secondary">Nursery, Primary and Secondary</MatOptionString>
+                                <MatOptionString Value="Others">Others</MatOptionString>
                             </MatSelect>
                         </div>
                     </div>
@@ -139,7 +139,7 @@ else
 @*Delete*@
 @if (!(school is null) && (mode == Mode.Delete))
 {
-    <MatDialog IsOpen="@deleteDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="true">
+    <MatDialog IsOpen="@deleteDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="true">
 
         <MatDialogTitle>Delete School?</MatDialogTitle>
 
@@ -159,24 +159,24 @@ else
     </MatDialog>
 }
 
-@*@{
+@{
     RenderFragment<SchoolStatistics> editFragment = (x) =>@<MatIconButton OnClick = "@(() => (ShowUpdateSchoolDialogAsync(x.Id)))" Icon="edit" Attributes="@(new Dictionary<string, object>() { { "title", "Edit School's Information" } })"></MatIconButton>;
 
     Collection.AddColumnValueRenderFunction(x => x.Name, editFragment);
-}*@
+}
 
 
 @code {
 
     #region variables
 
-    private SchoolStatistics[] schoolStats;
-    //CollectionTableDataAdapter<SchoolStatistics> schoolStats;
+    //private SchoolStatistics[] schoolStats;
+    CollectionTableDataAdapter<SchoolStatistics> schoolStats;
     private School school;
 
     private Mode mode = Mode.None;
-    private bool addUpdateDialogIsOpen;
-    private bool deleteDialogIsOpen;
+    private bool addUpdateDialogIsOpened;
+    private bool deleteDialogIsOpened;
     private bool busy;
     private bool loadFailed;
     private bool sessionExpired;
@@ -226,8 +226,8 @@ else
     private void CloseDialogs()
     {
         // Reset fields to their defaults
-        addUpdateDialogIsOpen = false;
-        deleteDialogIsOpen = false;
+        addUpdateDialogIsOpened = false;
+        deleteDialogIsOpened = false;
 
         add_RemoveAddressButtonLabel = null;
         school = null;
@@ -246,7 +246,7 @@ else
         busy = false;
     }
 
-    private void DialogIsOpenChanged(bool isOpened)
+    private void DialogIsOpenedChanged(bool isOpened)
     {
         if (!isOpened)
         {
@@ -262,10 +262,10 @@ else
         {
             if (AppUser.IsSuperAdmin || AppUser.IsAdmin)
             {
-                //var data = await SchoolService.GetAllStatsAsync();
-                //schoolStats = new CollectionTableDataAdapter<SchoolStatistics>(data);
+                var data = await SchoolService.GetAllStatsAsync();
+                schoolStats = new CollectionTableDataAdapter<SchoolStatistics>(data);
 
-                schoolStats = await SchoolService.GetAllStatsAsync();
+                //schoolStats = await SchoolService.GetAllStatsAsync();
             }
             else
             {
@@ -301,11 +301,19 @@ else
         busy = false;
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+       
+    }
+
     protected override async Task OnInitializedAsync()
     {
-        await AppUser.InitializeAsync();
+        if(!AppUser.IsSignedIn)
+        {
+            await AppUser.InitializeAsync();
+        }
+
         await LoadAsync();
-        //StateHasChanged();
     }
 
     private async Task ShowAddSchoolDialogAsync()
@@ -318,7 +326,7 @@ else
         add_UpdateButtonLabel = "Add";
         add_RemoveAddressButtonLabel = "Add";
         mode = Mode.Add;
-        addUpdateDialogIsOpen = true;
+        addUpdateDialogIsOpened = true;
 
         busy = false;
     }
@@ -330,7 +338,7 @@ else
         school = await SchoolService.GetAsync(id);
 
         mode = Mode.Delete;
-        deleteDialogIsOpen = true;
+        deleteDialogIsOpened = true;
 
         busy = false;
     }
@@ -360,7 +368,7 @@ else
         add_UpdateButtonLabel = "Update";
 
         mode = Mode.Update;
-        addUpdateDialogIsOpen = true;
+        addUpdateDialogIsOpened = true;
 
         //await InvokeAsync(() =>
         //{

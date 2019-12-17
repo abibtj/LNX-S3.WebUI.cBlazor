@@ -1,0 +1,4 @@
+﻿<StaticWebAssets Version="1.0">
+  <ContentRoot BasePath="_content/Blazor.FlexGrid" Path="C:\Users\Abeeb\.nuget\packages\blazor.flexgrid\0.10.0\build\..\staticwebassets\" />
+  <ContentRoot BasePath="_content/MatBlazor" Path="C:\Users\Abeeb\.nuget\packages\matblazor\2.0.0\build\..\staticwebassets\" />
+</StaticWebAssets>

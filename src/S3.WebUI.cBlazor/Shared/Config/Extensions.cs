@@ -45,7 +45,9 @@ namespace S3.WebUI.cBlazor.Shared.Config
             services.AddScoped<ISchoolService, SchoolService>();
             services.AddScoped<IStudentScoreService, StudentScoreService>();
             services.AddScoped<IScoresEntryTaskService, ScoresEntryTaskService>();
-            services.AddScoped<IClassSubjectScoresService, ClassSubjectScoresService>();
+            services.AddScoped<IRuleService, RuleService>();
+            services.AddScoped<IReportService, ReportService>();
+            //services.AddScoped<IClassSubjectScoresService, ClassSubjectScoresService>();
             services.AddScoped<IMiscellaneousService, MiscellaneousService>();
 
             return services;

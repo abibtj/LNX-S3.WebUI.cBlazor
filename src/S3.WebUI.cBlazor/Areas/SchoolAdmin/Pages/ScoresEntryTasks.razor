@@ -2,6 +2,7 @@
 @inject IScoresEntryTaskService ScoresEntryTaskService
 @inject IClassService ClassService
 @inject ITeacherService TeacherService
+@inject IRuleService RuleService
 @inject ILogger<ScoresEntryTasks> Logger
 @inject AppUser AppUser
 @inject IMatToaster Toaster
@@ -57,7 +58,7 @@ else
 {
     <EditForm Model="scoresEntryTask" OnValidSubmit="Add_UpdateAsync">
         <PeterLeslieMorris.Blazor.Validation.Validate />
-        <MatDialog IsOpen="@addUpdateDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+        <MatDialog IsOpen="@addUpdateDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="false">
 
             <MatDialogTitle>@add_UpdateTitle</MatDialogTitle>
 
@@ -66,23 +67,24 @@ else
 
                 <div class="row">
                     <div class="form-group col-md-6">
-                        <MatSelect Value="@selectedClassId" ValueChanged="LoadSubjects" Label="Class*" Required="true" Enhanced="true">
+                        <MatSelect TValue="string" Value="@selectedClassId" ValueChanged="LoadSubjects" Label="Class*" Required="true" Enhanced="true">
                             @if (!(availableClasses is null))
                             {
                                 @foreach (var _class in availableClasses)
                                 {
-                                    <MatOption Value="@_class.Id">@_class.Name</MatOption>
+                                    <MatOptionString Value="@_class.Id">@_class.Name</MatOptionString>
                                 }
                             }
                         </MatSelect>
                     </div>
                     <div class="form-group col-md-6">
-                        <MatSelect @bind-Value="scoresEntryTask.Subject" Label="Subject*" Required="true" Enhanced="true">
+                        @*<MatSelect @bind-Value="scoresEntryTask.Subject" Label="Subject*" Required="true" Enhanced="true">*@
+                        <MatSelect TValue="string" Value="@selectedSubject" ValueChanged="SetSelectedSubject" Label="Subject*" Required="true" Enhanced="true">
                             @if (!(classSubjects is null))
                             {
                                 @foreach (var subject in classSubjects)
                                 {
-                                    <MatOption Value="@subject">@subject</MatOption>
+                                    <MatOptionString Value="@subject">@subject</MatOptionString>
                                 }
                             }
                         </MatSelect>
@@ -91,7 +93,7 @@ else
 
                 <div class="row">
                     <div class="form-group col-md-6">
-                        <S3MatAutoComplete Collection="availableTeachers" StringValue="@selectedTeacher" ValueChanged="SetSelectedTeacher" ItemType="Teacher" CustomStringSelector="@(x => x.FullName)" Label="Teacher*" ShowClearButton="true"></S3MatAutoComplete>
+                        <MatAutocompleteList TItem="Teacher" Items="availableTeachers" StringValue="@selectedTeacher" ValueChanged="SetSelectedTeacher" CustomStringSelector="@(x => x.FullName)" Label="Teacher*" ShowClearButton="true"></MatAutocompleteList>
                     </div>
                     <div class="form-group col-md-6">
                         <MatDatePicker @bind-Value="scoresEntryTask.DueDate" Label="Due Date"></MatDatePicker>
@@ -99,7 +101,18 @@ else
                 </div>
 
                 <div class="row">
-                    <div class="form-group col-md-12">
+                    <div class="form-group col-md-6">
+                        <MatSelect TValue="string" Value="@selectedRuleId" ValueChanged="SetSelectedRule" Label="Rule*" Required="true" Enhanced="true">
+                            @if (!(availableRules is null))
+                            {
+                                @foreach (var rule in availableRules)
+                                {
+                                    <MatOption Value="@rule.Id">@rule.Name</MatOption>
+                                }
+                            }
+                        </MatSelect>
+                    </div>
+                    <div class="form-group col-md-6">
                         <MatTextField @bind-Value="scoresEntryTask.Description" Label="Description" TextArea="true" FullWidth="true"></MatTextField>
                     </div>
                 </div>
@@ -119,8 +132,8 @@ else
 @*Delete*@
 @if (!(scoresEntryTask is null) && (mode == Mode.Delete))
 {
-    <MatDialog IsOpen="@deleteDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="true">
-
+    <MatDialog IsOpen="@deleteDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="true">
+        
         <MatDialogTitle>Delete Task?</MatDialogTitle>
 
         <MatDialogContent>
@@ -148,17 +161,20 @@ else
     private ScoresEntryTask scoresEntryTask;
     private Class[] availableClasses;
     private Teacher[] availableTeachers;
+    private Rule[] availableRules;
     private string selectedTeacher;
     private string[] classSubjects;
 
     private Mode mode = Mode.None;
-    private bool addUpdateDialogIsOpen;
-    private bool deleteDialogIsOpen;
+    private bool addUpdateDialogIsOpened;
+    private bool deleteDialogIsOpened;
     private bool busy;
     private bool loadFailed;
     private bool sessionExpired;
 
     private string selectedClassId;
+    private string selectedRuleId;
+    private string selectedSubject;
     private string add_UpdateTitle;
     private string add_UpdateButtonLabel;
     private string errorTitle = "Error";
@@ -189,13 +205,15 @@ else
     private void CloseDialogs()
     {
         // Reset fields to their defaults
-        addUpdateDialogIsOpen = false;
-        deleteDialogIsOpen = false;
+        addUpdateDialogIsOpened = false;
+        deleteDialogIsOpened = false;
 
         selectedClassId = null;
+        selectedRuleId = null;
+        selectedTeacher = null;
+        selectedSubject = null;
         availableClasses = null;
         availableTeachers = null;
-        selectedTeacher = null;
         scoresEntryTask = null;
         classSubjects = null;
 
@@ -214,7 +232,7 @@ else
         busy = false;
     }
 
-    private void DialogIsOpenChanged(bool isOpened)
+    private void DialogIsOpenedChanged(bool isOpened)
     {
         if (!isOpened)
         {
@@ -281,15 +299,31 @@ else
     {
         availableClasses = await ClassService.GetAllAsync(schoolId: AppUser.SchoolId);
         availableTeachers = await TeacherService.GetAllSignedUpAsync(schoolId: AppUser.SchoolId);
+        availableRules = await RuleService.GetAllAsync(schoolId: AppUser.SchoolId);
     }
 
     protected override async Task OnInitializedAsync()
     {
-        await AppUser.InitializeAsync();
+       if(!AppUser.IsSignedIn)
+        {
+            await AppUser.InitializeAsync();
+        }
+        
         await LoadAsync();
-        //StateHasChanged();
     }
 
+    private void SetSelectedRule(string selectedRuleId)
+    {
+        scoresEntryTask.RuleId = selectedRuleId;
+        this.selectedRuleId = selectedRuleId;
+    }
+    
+    private void SetSelectedSubject(string selectedSubject)
+    {
+        scoresEntryTask.Subject = selectedSubject;
+        this.selectedSubject = selectedSubject;
+    }
+    
     private void SetSelectedTeacher(Teacher selectedTeacher)
     {
         scoresEntryTask.TeacherId = selectedTeacher.Id;
@@ -308,7 +342,7 @@ else
         add_UpdateTitle = "Add Task";
         add_UpdateButtonLabel = "Add";
 
-        addUpdateDialogIsOpen = true;
+        addUpdateDialogIsOpened = true;
 
         busy = false;
     }
@@ -321,7 +355,7 @@ else
         scoresEntryTask = scoresEntryTasks.FirstOrDefault(x => x.Id == id);
 
         mode = Mode.Delete;
-        deleteDialogIsOpen = true;
+        deleteDialogIsOpened = true;
 
         busy = false;
     }
@@ -331,19 +365,20 @@ else
         busy = true;
         mode = Mode.Update;
 
-        //scoresEntryTask = await ScoresEntryTaskService.GetAsync(id);
-        scoresEntryTask = scoresEntryTasks.FirstOrDefault(x => x.Id == id);
+        scoresEntryTask = scoresEntryTasks.First(x => x.Id == id);
         await LoadRequirementsAsync();
 
         this.selectedClassId = scoresEntryTask.ClassId;
-        this.selectedTeacher = availableTeachers.ToList().Find(x => x.Id == scoresEntryTask.TeacherId).FullName;
+        this.selectedRuleId = scoresEntryTask.RuleId;
+        this.selectedSubject = scoresEntryTask.Subject;
+        this.selectedTeacher = availableTeachers.ToList().First(x => x.Id == scoresEntryTask.TeacherId).FullName;
 
-        classSubjects = availableClasses.ToList().Find(x => x.Id == scoresEntryTask.ClassId).SubjectsArray;
+        classSubjects = availableClasses.ToList().First(x => x.Id == scoresEntryTask.ClassId).SubjectsArray;
 
         add_UpdateTitle = "Update Task";
         add_UpdateButtonLabel = "Update";
 
-        addUpdateDialogIsOpen = true;
+        addUpdateDialogIsOpened = true;
 
         busy = false;
     }

@@ -25,6 +25,9 @@ namespace S3.WebUI.cBlazor.Models.Validators
 
             RuleFor(x => x.DueDate)
               .GreaterThanOrEqualTo(DateTime.Now).When(x => !(x.DueDate is null)).WithMessage("Invalid due date.");
+
+            RuleFor(x => x.RuleId)
+                .NotEmpty().WithMessage("Rule is required.");
         }
     }
 }

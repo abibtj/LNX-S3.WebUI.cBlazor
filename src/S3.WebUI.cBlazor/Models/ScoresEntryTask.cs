@@ -12,5 +12,6 @@ namespace S3.WebUI.cBlazor.Models
         public string ClassId { get; set; }
         public string ClassName { get; set; }
         public virtual Class Class { get; set; }
+        public string RuleId { get; set; } // The rule to be used to determine the weight of this score and grade obtained in this subject
     }
 }

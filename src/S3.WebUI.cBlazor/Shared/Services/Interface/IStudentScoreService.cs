@@ -13,7 +13,7 @@ namespace S3.WebUI.cBlazor.Shared.Services.Interface
     {
         Task<StudentScore> GetAsync(string id, string[]? include = null);
         Task<StudentScore[]> GetAllAsync(string? schoolId = null, string? studentId = null, string? classId = null, 
-            string? subject = null, string? examType = null, int? term = null, int? session = null, string[]? include = null);
+            string? subject = null, string? examType = null, string? term = null, int? session = null, string[]? include = null);
         Task CreateAsync(ClassSubjectScores classSubjectScores);
         Task UpdateAsync(ClassSubjectScores classSubjectScores);
         Task DeleteAsync(string id);

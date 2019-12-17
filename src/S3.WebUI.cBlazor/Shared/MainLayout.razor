@@ -1,5 +1,5 @@
 ﻿@inherits LayoutComponentBase
-@inject AppUser User
+@inject AppUser AppUser
 
 <MatAppBarContainer>
     <MatToastContainer />
@@ -13,10 +13,10 @@
             <MatAppBarSection Align="@MatAppBarSectionAlign.End">
                 <NavLink class="text-white nav-link" href="" Match="NavLinkMatch.All">Home</NavLink>
 
-                @if (User.IsSignedIn)
+                @if (AppUser.IsSignedIn)
                 {
-                    <NavLink class="text-white nav-link" href="" Match="NavLinkMatch.All">@User.Username</NavLink>
-                    <NavLink class="text-white nav-link" href="" Match="NavLinkMatch.All" @onclick="User.SignOutAsync">Log out</NavLink>
+                    <NavLink class="text-white nav-link" href="" Match="NavLinkMatch.All">@AppUser.Username</NavLink>
+                    <NavLink class="text-white nav-link" href="" Match="NavLinkMatch.All" @onclick="AppUser.SignOutAsync">Log out</NavLink>
                 }
                 else
                 {
@@ -28,7 +28,7 @@
 
     <MatAppBarContent>
         <MatDrawerContainer Style="width: 100vw; height: 100vh;">
-            @if (User.IsSignedIn)
+            @if (AppUser.IsSignedIn)
             {
                 <MatDrawer @bind-Opened="navDrawerOpened">
                     <NavMenu />
@@ -48,14 +48,12 @@
 
 @code {
 
-    protected override async Task OnInitializedAsync()
+   protected override async Task OnInitializedAsync()
     {
-        //if (firstRender)
-        //{
-        await User.InitializeAsync();
-        //StateHasChanged();
-        //}
-
+       if(!AppUser.IsSignedIn)
+        {
+            await AppUser.InitializeAsync();
+        }
     }
 
     bool navDrawerOpened = true;

@@ -1,7 +1,7 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
   <PropertyGroup>
-    <TargetFramework>netstandard2.0</TargetFramework>
+    <TargetFramework>netstandard2.1</TargetFramework>
     <UserSecretsId>2d38cf95-95b3-46e4-bfa3-68440a831b04</UserSecretsId>
     <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
     <DockerfileContext>..\..</DockerfileContext>
@@ -22,24 +22,36 @@
     <!--warning CS8620: Argument of type 'AddressValidator' cannot be used for parameter 'validator' of type 'IValidator<ParentAddress?>' in 'IRuleBuilderOptions<CreateParentCommand, ParentAddress?> IRuleBuilder<CreateParentCommand, ParentAddress?>.SetValidator(IValidator<ParentAddress?> validator, params string[] ruleSets)' due to differences in the nullability of reference types.-->
     <!--warning CS8625: Cannot convert null literal to non-nullable reference type.-->
     <!--warning CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.-->
+    
+  
+  <!--<BlazorLinkOnBuild>false</BlazorLinkOnBuild>-->
   </PropertyGroup>
 
   <ItemGroup>
     
-    <PackageReference Include="Blazor.FlexGrid" Version="0.8.8" />
+    <PackageReference Include="Blazor.FlexGrid" Version="0.10.0" />
     <PackageReference Include="Blazored.LocalStorage" Version="2.1.1" />
-    <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" Version="1.0.0" />
-    <PackageReference Include="MatBlazor" Version="1.10.1" />
-    <!--<PackageReference Include="EmbeddedBlazorContent" Version="1.10.0" />-->
-    <!--<PackageReference Include="Microsoft.AspNetCore.Blazor.HttpClient" Version="3.1.0-preview1.19508.20" PrivateAssets="all" />-->
+    <!--<PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />-->
+    <!--<PackageReference Include="Microsoft.AspNetCore.Razor" Version="2.2.0" />-->
+    <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" Version="1.1.0-dotnetcore3.1.0-preview3.19555.2" />
+    <PackageReference Include="MatBlazor" Version="2.0.0" />
+    <!--<PackageReference Include="DinkToPdf" Version="1.0.8" />-->
     <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.9.5" />
     
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.0.0" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.0" />
     <!--default packages-->
-    <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.1.0-preview1.19508.20" />
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="3.1.0-preview1.19508.20" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.HttpClient" Version="3.1.0-preview1.19508.20" />
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.DevServer" Version="3.1.0-preview1.19508.20" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.1.0-preview4.19579.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="3.1.0-preview4.19579.2" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.HttpClient" Version="3.1.0-preview4.19579.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.DevServer" Version="3.1.0-preview4.19579.2" PrivateAssets="all" />
+    <!--<PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.1.0-preview3.19555.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="3.1.0-preview3.19555.2" PrivateAssets="all" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.HttpClient" Version="3.1.0-preview3.19555.2" />
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.DevServer" Version="3.1.0-preview3.19555.2" PrivateAssets="all" />-->
+    <!--<PackageReference Include="PDF.Core" Version="2019.8.9" />--><!--Not compartible with .net standard-->
+    <PackageReference Include="PuppeteerSharp" Version="2.0.0" />
+    <!--<PackageReference Include="RazorLight" Version="2.0.0-beta1" />--><!--Only works with .cshtml-->
+    <!--<PackageReference Include="System.Runtime.Loader" Version="4.3.0" />--><!--Linker / loader problem-->
   </ItemGroup>
 
   <ItemGroup>
@@ -55,5 +67,31 @@
     <EmbeddedResource Include="Configuration\appsettings.json" />
     <EmbeddedResource Include="Configuration\appsettings.*.json" />
 </ItemGroup>
+
+ <ItemGroup>
+	<BlazorLinkerDescriptor Include="Linker.xml" />
+</ItemGroup>
+
+  <!--Added the following ItemGroup to enable DinkToPdf (HTML to PDF converter) work on local and remote machines-->
+  <!--<ItemGroup>
+    <None Update="DinkToPdf\v0.12.4\32 bit\libwkhtmltox.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DinkToPdf\v0.12.4\32 bit\libwkhtmltox.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DinkToPdf\v0.12.4\32 bit\libwkhtmltox.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DinkToPdf\v0.12.4\64 bit\libwkhtmltox.dll">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DinkToPdf\v0.12.4\64 bit\libwkhtmltox.dylib">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+    <None Update="DinkToPdf\v0.12.4\64 bit\libwkhtmltox.so">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>-->
 
 </Project>

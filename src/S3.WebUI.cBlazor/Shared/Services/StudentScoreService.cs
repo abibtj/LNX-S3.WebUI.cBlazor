@@ -32,7 +32,7 @@ namespace S3.WebUI.cBlazor.Shared.Services
             => await _httpClient.DeleteAsync($"{_appSettings.ApiUrl}/{GetEndPoint("delete")}/{id}");
 
         public async Task<StudentScore[]> GetAllAsync(string? schoolId = null, string? studentId = null, string? classId = null,
-            string? subject = null, string? examType = null, int? term = null, int? session = null, string[]? include = null)
+            string? subject = null, string? examType = null, string? term = null, int? session = null, string[]? include = null)
             => await _httpClient.GetJsonAsync<StudentScore[]>($"{_appSettings.ApiUrl}/{GetEndPoint("getAll")}" +
                 $"{IncludeStringHelper.GetString(include)}schoolId={schoolId}&studentId={studentId}&classId={classId}&subject={subject}" +
                 $"&examType={examType}&term={term}&session={session}");

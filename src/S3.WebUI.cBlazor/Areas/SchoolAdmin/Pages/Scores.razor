@@ -1,98 +1,327 @@
 ﻿@page "/schadm/scores"
-@*@inject IScoresService ScoresService*@
 @inject IClassService ClassService
-@*@inject ITeacherService TeacherService*@
+@inject IReportService ReportService
 @inject IStudentScoreService StudentScoreService
 @inject ILogger<Scores> Logger
 @inject AppUser AppUser
 @inject IMatToaster Toaster
+@inject IJSRuntime JSRuntime
+@*@inject IConverter Converter*@
 
-<MatH5>Scores</MatH5>
-<br />
+<div class="scores">
+    <MatH5>Scores</MatH5>
+    <br />
 
-@if (!(scores is null))
-{
-<div class="row">
-  
-    <div class="col-md-4">
-        <MatSelect Value="@examType" ValueChanged="ChangeExamTypeAsync" Label="Exam Type" Enhanced="true">
-            <MatOption Value="Continuos Assessment">C.A.</MatOption>
-            <MatOption Value="First Exam">First Exam</MatOption>
-            <MatOption Value="Second Exam">Second Exam</MatOption>
-            <MatOption Value="Class Activities">Class Activities</MatOption>
-            <MatOption Value="Homework">Homework</MatOption>
-        </MatSelect>
-    </div>
-    <div class="col-md-4">
-        <MatSelect Value="@classId" ValueChanged="ChangeClassAsync" Label="Class" Enhanced="true">
-            @if (!(availableClasses is null))
-            {
-                @foreach (var _class in availableClasses)
-                {
-                    <MatOption Value="@_class.Id">@_class.Name</MatOption>
-                }
-            }
-        </MatSelect>
-    </div>
-    <div class="col-md-4">
-        <MatSelect Value="@subject" ValueChanged="ChangeSubjectAsync" Label="Subject" Enhanced="true">
-            @if (!(classSubjects is null))
-            {
-                @foreach (var subject in classSubjects)
-                {
-                    <MatOption Value="@subject">@subject</MatOption>
-                }
-            }
-        </MatSelect>
-    </div>
+    @if (!(scores is null))
+    {
+        <div class="row">
+            <div class="col-md-4">
+                <MatDatePicker TValue="DateTime" Value="@session" ValueChanged="ChangeSessionAsync" Label="Session"></MatDatePicker>
+            </div>
+
+            <div class="col-md-4">
+                <MatSelect TValue="string" Value="@term" ValueChanged="ChangeTermAsync" Label="Term" Enhanced="true">
+                    <MatOptionString Value="@Term.FirstTerm">First Term</MatOptionString>
+                    <MatOptionString Value="@Term.SecondTerm">Second Term</MatOptionString>
+                    <MatOptionString Value="@Term.ThirdTerm">Third Term</MatOptionString>
+                </MatSelect>
+            </div>
+
+            <div class="col-md-4">
+                <MatSelect TValue="string" Value="@selectedClass?.Id" ValueChanged="ChangeClassAsync" Label="Class" Enhanced="true">
+                    @if (!(availableClasses is null))
+                    {
+                        @foreach (var _class in availableClasses)
+                        {
+                            <MatOptionString Value="@_class.Id">@_class.Name</MatOptionString>
+                        }
+                    }
+                </MatSelect>
+            </div>
+
+        </div>
+        <div class="row">
+            <div class="col-md-4">
+                <MatSelect TValue="string" Value="@examType" ValueChanged="ChangeExamTypeAsync" Label="Exam Type" Enhanced="true">
+                    <MatOptionString Value="@ExamType.CA">C. A.</MatOptionString>
+                    <MatOptionString Value="@ExamType.FirstExam">First Exam</MatOptionString>
+                    <MatOptionString Value="@ExamType.SecondExam">Second Exam</MatOptionString>
+                    <MatOptionString Value="@ExamType.ClassActivities">Class Activities</MatOptionString>
+                    <MatOptionString Value="@ExamType.Homework">Homework</MatOptionString>
+                </MatSelect>
+            </div>
+
+            <div class="col-md-4">
+                <MatSelect TValue="string" Value="@subject" ValueChanged="ChangeSubjectAsync" Label="Subject" Enhanced="true">
+                    @if (!(classSubjects is null))
+                    {
+                        @foreach (var subject in classSubjects)
+                        {
+                            <MatOptionString Value="@subject">@subject</MatOptionString>
+                        }
+                    }
+                </MatSelect>
+            </div>
+
+            <div class="col-md-4">
+                <MatIconButton OnClick="@(() => ShowReportsAsync())" Icon="chrome_reader_mode" Attributes="@(new Dictionary<string, object>() { { "title", "Generate Reports" } })"></MatIconButton>
+            </div>
+
+        </div>
+
+        <img class="@(busy? "show-gif": "hide-gif")" src="/images/loading.gif" />
+
+        <MatTable Items="@scores" Striped="true">
+            <MatTableHeader>
+                <th>Name</th>
+                <th>Score</th>
+                <th>Subject</th>
+                <th>Class</th>
+            </MatTableHeader>
+            <MatTableRow>
+                @if (scores.Length > 0)
+                    {
+                    <td>@context.StudentName</td>
+                    <td>@context.Mark</td>
+                    <td>@context.Subject</td>
+                    <td>@context.ClassName</td>
+                    }
+                    else
+                    {
+                    <td>No scores found! Please, select appropriate criteria.</td>
+                    }
+            </MatTableRow>
+        </MatTable>
+    }
+    else if (loadFailed)
+    {
+        <p><em>@errorMessage</em></p>
+        Toaster.Add(errorMessage, MatToastType.Danger, errorTitle, "error");
+    }
+    else
+    {
+        <MatProgressBar Indeterminate="true"></MatProgressBar>
+    }
+
 </div>
-<div class="row">
 
-    <div class="col-md-4">
-        <MatSelect Value="@term" ValueChanged="ChangeTermAsync" Label="Term" Enhanced="true">
-            <MatOption Value="1">First Term</MatOption>
-            <MatOption Value="2">Second Term</MatOption>
-            <MatOption Value="3">Third Term</MatOption>
-        </MatSelect>
-    </div>
-    <div class="col-md-4">
-        <MatDatePicker Value="@session" ValueChanged="ChangeSessionAsync" Label="Session"></MatDatePicker>
-    </div>
-
-</div>
-
-    <img class="@(busy? "show-gif": "hide-gif")" src="/images/loading.gif" />
-
-    <MatTable Items="@scores" Striped="true">
-        <MatTableHeader>
-            <th>Name</th>
-            <th>Score</th>
-            <th>Subject</th>
-            <th>Class</th>
-        </MatTableHeader>
-        <MatTableRow>
-            @if (scores.Length > 0)
-                {
-                <td>@context.StudentName</td>
-                <td>@context.Mark</td>
-                <td>@context.Subject</td>
-                <td>@context.ClassName</td>
-                }
-                else
-                {
-                <td>No scores found! Please, select appropriate criteria.</td>
-                }
-        </MatTableRow>
-    </MatTable>
-}
-else if (loadFailed)
+@*View Report Cards Information*@
+@if (classReport is object && mode != Mode.None)
 {
-    <p><em>@errorMessage</em></p>
-    Toaster.Add(errorMessage, MatToastType.Danger, errorTitle, "error");
-}
-else
-{
-    <MatProgressBar Indeterminate="true"></MatProgressBar>
+    @*<MatDialog IsOpen="@reportDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="false">
+
+        <MatDialogTitle>@selectedClass.Name Reports</MatDialogTitle>
+
+        <MatDialogContent>*@
+    @*<div class="text-hide">*@
+    <div id="all-report-cards">
+
+        @foreach (var studentReport in classReport.StudentReports)
+        {
+            //Display Student's details
+            <div class="report-card">
+                <table align="center">
+                    <tr>
+                        <td>
+                            <h3 class="py-2">@studentReport.StudentName</h3>
+                            <p>Class: @selectedClass.Name</p>
+                            <p>Session: @session.Year</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td>
+                            <table>
+
+                                <tr>
+                                    <th>First Term</th>
+                                    <th>Second Term</th>
+                                    <th>Third Term</th>
+                                </tr>
+
+                                <tr>
+                                    <td>
+                                        @*First Term Result*@
+                                        @{
+                                            var firstTermReport = studentReport.TermReports.FirstOrDefault(x => x.Term == Term.FirstTerm);
+                                            var firstTermStat = classReport.ScoresStat.TermStats.FirstOrDefault(x => x.Term == Term.FirstTerm);
+                                        }
+                                        <table class="report-card-data">
+                                            <colgroup>
+                                                <col class="column-width-subject" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                            </colgroup>
+                                            <tr class="vertical-align">
+                                                <th>Subject</th>
+                                                <th>C.A</th>
+                                                <th>1st Exam</th>
+                                                <th>2nd Exam</th>
+                                                <th>Homework</th>
+                                                <th>Class Acts</th>
+                                                <th>Total</th>
+                                                <th>Class Min</th>
+                                                <th>Class Max</th>
+                                                <th>Class Ave</th>
+                                                <th>Grade</th>
+                                            </tr>
+                                            @foreach (var subject in classSubjects)
+                                            {
+                                                var subjectReport = firstTermReport?.SubjectReports.FirstOrDefault(x => x.Subject == subject);
+                                                var subjectStat = firstTermStat?.Stats.FirstOrDefault(x => x.Subject == subject);
+                                                <tr class="report-card-data">
+                                                    <td>@subject</td>
+                                                    <td>@subjectReport?.CAScore</td>
+                                                    <td>@subjectReport?.FirstExamScore</td>
+                                                    <td>@subjectReport?.SecondExamScore</td>
+                                                    <td>@subjectReport?.HomeworkScore</td>
+                                                    <td>@subjectReport?.ClassActivitiesScore</td>
+                                                    <td>@subjectReport?.WeightedScore</td>
+                                                    <td>@subjectStat?.ClassMinScore</td>
+                                                    <td>@subjectStat?.ClassMaxScore</td>
+                                                    <td>@subjectStat?.ClassAverageScore</td>
+                                                    <td>@subjectReport?.Grade</td>
+                                                </tr>
+                                            }
+                                        </table>
+                                    </td> @*First Term Result*@
+
+                                    <td>
+                                        @*Second Term Result*@
+                                        @{
+                                            var secondTermReport = studentReport.TermReports.FirstOrDefault(x => x.Term == Term.SecondTerm);
+                                            var secondTermStat = classReport.ScoresStat.TermStats.FirstOrDefault(x => x.Term == Term.SecondTerm);
+                                        }
+                                        <table class="report-card-data">
+                                            <colgroup>
+                                                <col class="column-width-subject" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                            </colgroup>
+                                            <tr class="vertical-align">
+                                                <th>Subject</th>
+                                                <th>C.A</th>
+                                                <th>1st Exam</th>
+                                                <th>2nd Exam</th>
+                                                <th>Homework</th>
+                                                <th>Class Acts</th>
+                                                <th>Total</th>
+                                                <th>Class Min</th>
+                                                <th>Class Max</th>
+                                                <th>Class Ave</th>
+                                                <th>Grade</th>
+                                            </tr>
+                                            @foreach (var subject in classSubjects)
+                                            {
+                                                var subjectReport = secondTermReport?.SubjectReports.FirstOrDefault(x => x.Subject == subject);
+                                                var subjectStat = secondTermStat?.Stats.FirstOrDefault(x => x.Subject == subject);
+                                                <tr class="report-card-data">
+                                                    <td>@subject</td>
+                                                    <td>@subjectReport?.CAScore</td>
+                                                    <td>@subjectReport?.FirstExamScore</td>
+                                                    <td>@subjectReport?.SecondExamScore</td>
+                                                    <td>@subjectReport?.HomeworkScore</td>
+                                                    <td>@subjectReport?.ClassActivitiesScore</td>
+                                                    <td>@subjectReport?.WeightedScore</td>
+                                                    <td>@subjectStat?.ClassMinScore</td>
+                                                    <td>@subjectStat?.ClassMaxScore</td>
+                                                    <td>@subjectStat?.ClassAverageScore</td>
+                                                    <td>@subjectReport?.Grade</td>
+                                                </tr>
+                                            }
+                                        </table>
+                                    </td> @*Second Term Result*@
+
+                                    <td>
+                                        @*Third Term Result*@
+                                        @{
+                                            var thirdTermReport = studentReport.TermReports.FirstOrDefault(x => x.Term == Term.ThirdTerm);
+                                            var thirdTermStat = classReport.ScoresStat.TermStats.FirstOrDefault(x => x.Term == Term.ThirdTerm);
+                                        }
+                                        <table class="report-card-data">
+                                            <colgroup>
+                                                <col class="column-width-subject" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                                <col class="column-width" />
+                                            </colgroup>
+                                            <tr class="vertical-align">
+                                                <th>Subject</th>
+                                                <th>C.A</th>
+                                                <th>1st Exam</th>
+                                                <th>2nd Exam</th>
+                                                <th>Homework</th>
+                                                <th>Class Acts</th>
+                                                <th>Total</th>
+                                                <th>Class Min</th>
+                                                <th>Class Max</th>
+                                                <th>Class Ave</th>
+                                                <th>Grade</th>
+                                            </tr>
+                                            @foreach (var subject in classSubjects)
+                                            {
+                                                var subjectReport = thirdTermReport?.SubjectReports.FirstOrDefault(x => x.Subject == subject);
+                                                var subjectStat = thirdTermStat?.Stats.FirstOrDefault(x => x.Subject == subject);
+                                                <tr class="report-card-data">
+                                                    <td>@subject</td>
+                                                    <td>@subjectReport?.CAScore</td>
+                                                    <td>@subjectReport?.FirstExamScore</td>
+                                                    <td>@subjectReport?.SecondExamScore</td>
+                                                    <td>@subjectReport?.HomeworkScore</td>
+                                                    <td>@subjectReport?.ClassActivitiesScore</td>
+                                                    <td>@subjectReport?.WeightedScore</td>
+                                                    <td>@subjectStat?.ClassMinScore</td>
+                                                    <td>@subjectStat?.ClassMaxScore</td>
+                                                    <td>@subjectStat?.ClassAverageScore</td>
+                                                    <td>@subjectReport?.Grade</td>
+                                                </tr>
+                                            }
+                                        </table>
+                                    </td> @*Third Term Result*@
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+
+            </div>
+            <br />
+        }
+
+    </div>
+    @*</div>*@
+
+    @*</MatDialogContent>
+
+            <MatDialogActions>
+                <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+                <MatButton Type="button"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Save</MatButton>
+                <button onclick="javascript:window.print()">Print</button>
+            </MatDialogActions>
+
+        </MatDialog>*@
 }
 
 
@@ -102,21 +331,82 @@ else
 
     private StudentScore[] scores;
     private Class[] availableClasses;
+    private Class selectedClass;
+    private ClassReport classReport;
     private string[] classSubjects;
+    private Mode mode = Mode.None;
 
     //private Mode mode = Mode.None;
     private bool busy;
     private bool loadFailed;
     private bool sessionExpired;
+    //private bool reportDialogIsOpened;
+    private bool
+        showPrintPreview;
 
-    string classId;
+    //string classId;
     string subject;
-    private string term = "1"; // To be typecast to int
-    private string examType;
+    private string term = Term.FirstTerm;
+    private string examType = ExamType.FirstExam;
     private DateTime session = DateTime.UtcNow;
     private string errorTitle = "Error";
     private string errorMessage = "Sorry, we could not load this resource due to an error. Please, try again later.";
     #endregion
+
+
+    private async Task ChangeClassAsync(string selectedClassId)
+    {
+        selectedClass = availableClasses.ToList().First(x => x.Id == selectedClassId);
+
+        //classId = selectedClassId;
+        classSubjects = selectedClass.SubjectsArray;
+
+        await SearchScoresAsync();
+    }
+
+    private async Task ChangeExamTypeAsync(string selectedExamType)
+    {
+        examType = selectedExamType;
+        await SearchScoresAsync();
+    }
+
+    private async Task ChangeSessionAsync(DateTime selectedSession)
+    {
+        if (selectedSession.Year != session.Year)
+        {
+            session = selectedSession;
+            await SearchScoresAsync();
+        }
+    }
+
+    private async Task ChangeSubjectAsync(string selectedSubject)
+    {
+        subject = selectedSubject;
+        await SearchScoresAsync();
+    }
+
+    private async Task ChangeTermAsync(string selectedTerm)
+    {
+        term = selectedTerm;
+        await SearchScoresAsync();
+    }
+
+    private void CloseDialogs()
+    {
+        // Reset fields to their defaults
+        //reportDialogIsOpened = false;
+        showPrintPreview = false;
+
+        classReport = null;
+    }
+
+    private void DialogIsOpenedChanged(bool isOpened)
+    {
+        if (!isOpened)
+        {
+            CloseDialogs();
+        }
+    }
 
     private async Task LoadAsync()
     {
@@ -167,58 +457,76 @@ else
         busy = false;
     }
 
-    private async Task ChangeClassAsync(string selectedClassId)
+    protected override async Task OnInitializedAsync()
     {
-        var selectedClass = availableClasses.ToList().Find(x => x.Id == selectedClassId);
-
-        classId = selectedClassId;
-        classSubjects = selectedClass.SubjectsArray;
-
-        await SearchScoresAsync();
-    }
-
-    private async Task ChangeExamTypeAsync(string selectedExamType)
-    {
-        examType = selectedExamType;
-        await SearchScoresAsync();
-    }
-
-    private async Task ChangeSessionAsync(DateTime? selectedSession)
-    {
-        if (selectedSession?.Year != session.Year)
+        if (!AppUser.IsSignedIn)
         {
-            session = selectedSession.Value;
-            await SearchScoresAsync();
+            await AppUser.InitializeAsync();
+        }
+
+        await LoadAsync();
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (classReport is object)
+        {
+            // Show print dialog
+            //JSRuntime.InvokeVoidAsync("printPreviewItem", "all-report-cards");
+            //await JSRuntime.InvokeVoidAsync("print");
+            //await JSRuntime.InvokeVoidAsync("downloadReportCards");
+            //showPrintPreview = false;
+            classReport = null;
         }
     }
 
-    private async Task ChangeSubjectAsync(string selectedSubject)
-    {
-        subject = selectedSubject;
-        await SearchScoresAsync();
-    }
-
-    private async Task ChangeTermAsync(string selectedTerm)
-    {
-        term = selectedTerm;
-        await SearchScoresAsync();
-    }
-
-    protected override async Task OnInitializedAsync()
-    {
-        await AppUser.InitializeAsync();
-        await LoadAsync();
-        //StateHasChanged();
-    }
-
-    protected async Task SearchScoresAsync()
+    private async Task SearchScoresAsync()
     {
         busy = true;
 
-        scores = await StudentScoreService.GetAllAsync(schoolId: AppUser.SchoolId, classId: classId,
-                subject: subject, examType: examType, term: int.Parse(term), session: session.Year);
+        scores = await StudentScoreService.GetAllAsync(schoolId: AppUser.SchoolId, classId: selectedClass?.Id,
+                subject: subject, examType: examType, term: term, session: session.Year);
 
         busy = false;
+    }
+
+    private async Task ShowReportsAsync()
+    {
+        if (selectedClass is null) // No class has been selected
+        {
+            Toaster.Add("Please, select the class for which reports are to be generated.", MatToastType.Danger, "No Class Selected", "error");
+        }
+        else
+        {
+            busy = true;
+
+            classReport = await ReportService.GetAsync(classId: selectedClass.Id, session: session.Year);
+
+            await PdfGenerator.GenerateAsync(classReport, selectedClass, session.Year, classSubjects);
+
+            //var pdf = new HtmlToPdfDocument()
+            //{
+            //    GlobalSettings = PdfSettingsHelper.GetGlobalSettings(),
+            //    Objects = { PdfSettingsHelper.GetObjectSettings(classReport, selectedClass, session.Year, classSubjects) }
+            //};
+
+            //byte[] file = Converter.Convert(pdf);
+
+            //await JSRuntime.InvokeAsync<object>("downloadReportCards", $"{selectedClass.Name} Report Cards.pdf", Convert.ToBase64String(file));
+
+
+
+            //reportDialogIsOpened = true;
+            //await JSRuntime.InvokeVoidAsync("downloadReportCards");
+
+
+            //showPrintPreview = true;
+            busy = false;
+
+            // Show print dialog
+            //JSRuntime.InvokeVoidAsync("PrintPreviewItem", "all-report-cards");
+            //JSRuntime.InvokeVoidAsync("print");
+        }
     }
 
 }

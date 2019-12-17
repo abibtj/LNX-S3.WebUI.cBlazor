@@ -1,0 +1,347 @@
+﻿@page "/schadm/rules"
+@inject IRuleService RuleService
+@inject ISchoolService SchoolService
+@inject IStudentService StudentService
+@inject IMiscellaneousService MiscellaneousService
+@inject IIdentityService IdentityService
+@inject ILogger<Rules> Logger
+@inject AppUser AppUser
+@inject IMatToaster Toaster
+
+<MatH5>Rules</MatH5>
+<br />
+
+@if (!(rules is null))
+{
+    @if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin) // School admin can add new rules
+    {
+        <MatButton OnClick="ShowAddRuleDialogAsync" Icon="person_add">Add Rule</MatButton>
+    }
+    <MatButton OnClick="LoadAsync" Icon="refresh">Refresh</MatButton>
+
+    <img class="@(busy? "show-gif": "hide-gif")" src="/images/loading.gif" />
+
+    <MatTable Items="@rules" Striped="true">
+        <MatTableHeader>
+            <th>Name</th>
+            <th>Creation Date</th>
+            <th>Applied</th>
+            <th></th>
+        </MatTableHeader>
+        <MatTableRow>
+            <td>@context.Name</td>
+            <td>@context.CreatedDate</td>
+            <td>@*@context.Applied*@</td>
+            <td>
+                <MatIconButton OnClick="@(() => ShowUpdateRuleDialogAsync(context.Id))" Icon="edit" Attributes="@(new Dictionary<string, object>() { { "title", "Edit Rule's Information" } })"></MatIconButton>
+                <MatIconButton OnClick="@(() => ShowDeleteRuleDialog(context.Id))" Icon="delete_forever" Attributes="@(new Dictionary<string, object>() { { "title", "Delete Rule" } })"></MatIconButton>
+            </td>
+        </MatTableRow>
+    </MatTable>
+}
+else if (loadFailed)
+{
+    <p><em>@errorMessage</em></p>
+    Toaster.Add(errorMessage, MatToastType.Danger, errorTitle, "error");
+}
+else
+{
+    <MatProgressBar Indeterminate="true"></MatProgressBar>
+}
+
+@*Add / Update*@
+@if (!(rules is null) && (mode == Mode.Add || mode == Mode.Update))
+{
+
+    <EditForm Model="rule" OnValidSubmit="Add_UpdateAsync">
+        <PeterLeslieMorris.Blazor.Validation.Validate />
+        <MatDialog IsOpen="@addUpdateDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="false">
+
+            <MatDialogTitle>@add_UpdateTitle</MatDialogTitle>
+
+            <MatDialogContent>
+                <p>Specify the percentage for each type of scores.</p>
+                <p>Cutoff marks for each grade must also be specified.</p>
+                <hr />
+                <ValidationSummary />
+
+                @*Rule properties*@
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        <MatTextField @bind-Value="rule.Name" Label="Rule Name" Required="true"></MatTextField>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        <MatNumericUpDownField @bind-Value="rule.CAPercentage" Label="Continuos Assessment (%)" DecimalPlaces=1 Minimum=0 Maximum="100"></MatNumericUpDownField>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        <MatNumericUpDownField @bind-Value="rule.FirstExamPercentage" Label="First Exam (%)" Required="true" DecimalPlaces=1 Minimum=0 Maximum="100"></MatNumericUpDownField>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        <MatNumericUpDownField @bind-Value="rule.SecondExamPercentage" Label="Second Exam (%)" DecimalPlaces=1 Minimum=0 Maximum="100"></MatNumericUpDownField>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        <MatNumericUpDownField @bind-Value="rule.HomeworkPercentage" Label="Homework (%)" DecimalPlaces=1 Minimum=0 Maximum="100"></MatNumericUpDownField>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        <MatNumericUpDownField @bind-Value="rule.ClassActivitiesPercentage" Label="Class Activities (%)" DecimalPlaces=1 Minimum=0 Maximum="100"></MatNumericUpDownField>
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="form-group col-md-12">
+                        <MatCheckbox @bind-Value="rule.IsDefault" Label="Default"></MatCheckbox>
+                    </div>
+                </div>
+
+                <MatAccordion>
+                    <MatExpansionPanel @bind-Expanded="cutoffPanelExpanded">
+                        <MatExpansionPanelSummary>
+                            <MatExpansionPanelHeader>Cutoff</MatExpansionPanelHeader>
+                        </MatExpansionPanelSummary>
+                        <MatExpansionPanelDetails>
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    <MatNumericUpDownField @bind-Value="rule.A_DistinctionCutoff" Label="Distinction (A)" Required="true" DecimalPlaces=1 Minimum=0 Maximum="100"></MatNumericUpDownField>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    <MatNumericUpDownField @bind-Value="rule.B_VeryGoodCutoff" Label="Very Good (B)" Required="true" DecimalPlaces=1 Minimum=0 Maximum="100"></MatNumericUpDownField>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    <MatNumericUpDownField @bind-Value="rule.C_CreditCutoff" Label="Credit (C)" Required="true" DecimalPlaces=1 Minimum=0 Maximum="100"></MatNumericUpDownField>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    <MatNumericUpDownField @bind-Value="rule.P_PassCutoff" Label="Pass (P)" Required="true" DecimalPlaces=1 Minimum=0 Maximum="100"></MatNumericUpDownField>
+                                </div>
+                            </div>
+
+                            <div class="row">
+                                <div class="form-group col-md-12">
+                                    <MatNumericUpDownField @bind-Value="rule.F_FailCutoff" Label="Fail (F)" Required="true" DecimalPlaces=1 Minimum=0 Maximum="100"></MatNumericUpDownField>
+                                </div>
+                            </div>
+                        </MatExpansionPanelDetails>
+                    </MatExpansionPanel>
+                </MatAccordion>
+            </MatDialogContent>
+
+            <MatDialogActions>
+                <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+                <MatButton Type="submit"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>@add_UpdateButtonLabel</MatButton>
+            </MatDialogActions>
+
+        </MatDialog>
+    </EditForm>
+}
+
+@*Delete*@
+@if (!(rule is null) && (mode == Mode.Delete))
+{
+    <MatDialog IsOpen="@deleteDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="true">
+
+        <MatDialogTitle>Delete Rule?</MatDialogTitle>
+
+        <MatDialogContent>
+            <br />
+            <div class="form-group">
+                <p>Are you sure you want to delete <strong>@rule.Name</strong> permanently?</p>
+            </div>
+            <br />
+        </MatDialogContent>
+
+        <MatDialogActions>
+            <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+            <MatButton @onclick="@(() => DeleteAsync(rule.Id))"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Delete</MatButton>
+        </MatDialogActions>
+
+    </MatDialog>
+}
+
+
+@code {
+
+    #region variables
+
+    private Rule[] rules;
+    private Rule rule;
+
+    private Mode mode = Mode.None;
+    private bool addUpdateDialogIsOpened;
+    private bool deleteDialogIsOpened;
+    private bool cutoffPanelExpanded;
+    private bool busy;
+    private bool loadFailed;
+    private bool sessionExpired;
+
+    private string add_UpdateTitle;
+    private string add_UpdateButtonLabel;
+    private string errorTitle = "Error";
+    private string errorMessage = "Sorry, we could not load this resource due to an error. Please, try again later.";
+    #endregion
+
+
+    private async Task Add_UpdateAsync()
+    {
+        busy = true;
+ 
+        if (mode == Mode.Add)
+        {
+            await RuleService.CreateAsync(rule);
+        }
+        else if (mode == Mode.Update)
+        {
+            await RuleService.UpdateAsync(rule);
+        }
+
+        await LoadAsync();
+        CloseDialogs();
+        Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+
+        busy = false;
+    }
+
+    private void CloseDialogs()
+    {
+        // Reset fields to their defaults
+        addUpdateDialogIsOpened = false;
+        deleteDialogIsOpened = false;
+        cutoffPanelExpanded = false;
+
+        rule = null;
+        mode = Mode.None;
+    }
+
+    private async Task DeleteAsync(string id)
+    {
+        busy = true;
+
+        await RuleService.DeleteAsync(id);
+        await LoadAsync();
+        CloseDialogs();
+        Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+
+        busy = false;
+    }
+
+    private void DialogIsOpenedChanged(bool isOpened)
+    {
+        if (!isOpened)
+        {
+            CloseDialogs();
+        }
+    }
+
+    private async Task LoadAsync()
+    {
+        busy = true;
+
+        try
+        {
+            if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin)
+            {
+                rules = await RuleService.GetAllAsync(schoolId: AppUser.SchoolId);
+            }
+            else
+            {
+                loadFailed = true;
+                errorMessage = "You are not authorised to view this resource.";
+            }
+        }
+        catch (System.Net.Http.HttpRequestException ex)
+        {
+            loadFailed = true;
+            (errorTitle, errorMessage, sessionExpired) = ErrorMessageHelper.GetMessage(ex);
+
+            if (sessionExpired)
+            {
+                try //TODO: Remove the following try catch block when globa error handling is implemented
+                {
+                    await AppUser.SignOutAsync();
+                }
+                catch (Exception e)
+                {
+                    Logger.LogWarning(e, "Unable to log user out.");
+                }
+            }
+
+            Logger.LogWarning(ex, "Failed to load resource.");
+        }
+        catch (Exception ex)
+        {
+            loadFailed = true;
+            Logger.LogWarning(ex, "Failed to load resource.");
+        }
+
+        busy = false;
+    }
+
+   protected override async Task OnInitializedAsync()
+    {
+       if(!AppUser.IsSignedIn)
+        {
+            await AppUser.InitializeAsync();
+        }
+        
+        await LoadAsync();
+    }
+
+    private async Task ShowAddRuleDialogAsync()
+    {
+        busy = true;
+
+        rule = new Rule { SchoolId = AppUser.SchoolId };
+
+        add_UpdateTitle = "Add Rule";
+        add_UpdateButtonLabel = "Add";
+        mode = Mode.Add;
+        addUpdateDialogIsOpened = true;
+        cutoffPanelExpanded = true; // Cutoff marks are required, show the input controls by default
+
+        busy = false;
+    }
+
+    private void ShowDeleteRuleDialog(string id)
+    {
+        busy = true;
+
+        rule = rules.First(x => x.Id == id);
+
+        mode = Mode.Delete;
+        deleteDialogIsOpened = true;
+
+        busy = false;
+    }
+
+    private async Task ShowUpdateRuleDialogAsync(string id)
+    {
+        busy = true;
+
+        rule = rules.First(x => x.Id == id);
+
+        add_UpdateTitle = "Update Rule";
+        add_UpdateButtonLabel = "Update";
+
+        mode = Mode.Update;
+        addUpdateDialogIsOpened = true;
+
+        busy = false;
+    }
+
+}

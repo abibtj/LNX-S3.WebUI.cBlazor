@@ -1,4 +1,4 @@
-﻿@page "/s/results"
+﻿@page "/s/my-scores"
 @*@inject IScoresService ScoresService*@
 @inject IClassService ClassService
 @*@inject ITeacherService TeacherService*@
@@ -15,37 +15,23 @@
 <div class="row">
   
     <div class="col-md-4">
-        <MatSelect Value="@examType" ValueChanged="ChangeExamTypeAsync" Label="Exam Type" Enhanced="true">
-            <MatOption Value="Continuos Assessment">C.A.</MatOption>
-            <MatOption Value="First Exam">First Exam</MatOption>
-            <MatOption Value="Second Exam">Second Exam</MatOption>
-            <MatOption Value="Class Activities">Class Activities</MatOption>
-            <MatOption Value="Homework">Homework</MatOption>
+        <MatSelect TValue="string" Value="@examType" ValueChanged="ChangeExamTypeAsync" Label="Exam Type" Enhanced="true">
+            <MatOptionString Value="@ExamType.CA">C. A.</MatOptionString>
+            <MatOptionString Value="@ExamType.FirstExam">First Exam</MatOptionString>
+            <MatOptionString Value="@ExamType.SecondExam">Second Exam</MatOptionString>
+            <MatOptionString Value="@ExamType.ClassActivities">Class Activities</MatOptionString>
+            <MatOptionString Value="@ExamType.Homework">Homework</MatOptionString>
         </MatSelect>
     </div>
     <div class="col-md-4">
-        <MatSelect Value="@subject" ValueChanged="ChangeSubjectAsync" Label="Subject" Enhanced="true">
-            @if (!(classSubjects is null))
-            {
-                @foreach (var subject in classSubjects)
-                {
-                    <MatOption Value="@subject">@subject</MatOption>
-                }
-            }
-        </MatSelect>
-    </div>
-</div>
-<div class="row">
-
-    <div class="col-md-4">
-        <MatSelect Value="@term" ValueChanged="ChangeTermAsync" Label="Term" Enhanced="true">
-            <MatOption Value="1">First Term</MatOption>
-            <MatOption Value="2">Second Term</MatOption>
-            <MatOption Value="3">Third Term</MatOption>
+        <MatSelect TValue="string" Value="@term" ValueChanged="ChangeTermAsync" Label="Term" Enhanced="true">
+            <MatOptionString Value="@Term.FirstTerm">First Term</MatOptionString>
+            <MatOptionString Value="@Term.SecondTerm">Second Term</MatOptionString>
+            <MatOptionString Value="@Term.ThirdTerm">Third Term</MatOptionString>
         </MatSelect>
     </div>
     <div class="col-md-4">
-        <MatDatePicker Value="@session" ValueChanged="ChangeSessionAsync" Label="Session"></MatDatePicker>
+        <MatDatePicker TValue="DateTime" Value="@session" ValueChanged="ChangeSessionAsync" Label="Session"></MatDatePicker>
     </div>
 
 </div>
@@ -54,24 +40,21 @@
 
     <MatTable Items="@scores" Striped="true">
         <MatTableHeader>
-            <th>Name</th>
-            <th>Score</th>
             <th>Subject</th>
-            <th>Class</th>
+            <th>Score</th>
+            <th>Grade</th>
         </MatTableHeader>
         <MatTableRow>
             @if (scores.Length > 0)
                 {
-                <td>@context.StudentName</td>
-                <td>@context.Mark</td>
                 <td>@context.Subject</td>
+                <td>@context.Mark</td>
                 <td>@context.ClassName</td>
                 }
                 else
                 {
                 <td colspan="4">No scores found! Please, select appropriate criteria.</td>
                 }
-            /**/
         </MatTableRow>
     </MatTable>
 }
@@ -91,19 +74,18 @@ else
     #region variables
 
     private StudentScore[] scores;
-    private Class[] availableClasses;
-    private Student student;
-    private string[] classSubjects;
+    //private Class[] availableClasses;
+    //private Student student;
+    //private string[] classSubjects;
 
     //private Mode mode = Mode.None;
     private bool busy;
     private bool loadFailed;
     private bool sessionExpired;
 
-    string classId;
-    string subject;
-    private string term; // To be typecast to int
-    private string examType;
+    private string studentName;
+    private string term = Term.FirstTerm;
+    private string examType = ExamType.FirstExam;
     private DateTime session = DateTime.UtcNow;
     private string errorTitle = "Error";
     private string errorMessage = "Sorry, we could not load this resource due to an error. Please, try again later.";
@@ -117,8 +99,8 @@ else
         {
             if (AppUser.IsStudent)
             {
-                scores = await StudentScoreService.GetAllAsync(studenId: AppUser.Id,
-                subject: subject, examType: examType, term: int.Parse(term), session: session.Year);
+                scores = await StudentScoreService.GetAllAsync(studentId: AppUser.Id,
+                 examType: examType, term: term, session: session.Year);
             }
             else
             {
@@ -154,35 +136,19 @@ else
         busy = false;
     }
 
-    private async Task ChangeClassAsync(string selectedClassId)
-    {
-        var selectedClass = availableClasses.ToList().Find(x => x.Id == selectedClassId);
-
-        classId = selectedClassId;
-        classSubjects = selectedClass.SubjectsArray;
-
-        await SearchScoresAsync();
-    }
-
     private async Task ChangeExamTypeAsync(string selectedExamType)
     {
         examType = selectedExamType;
         await SearchScoresAsync();
     }
 
-    private async Task ChangeSessionAsync(DateTime? selectedSession)
+    private async Task ChangeSessionAsync(DateTime selectedSession)
     {
-        if (selectedSession?.Year != session.Year)
+        if (selectedSession.Year != session.Year)
         {
-            session = selectedSession.Value;
+            session = selectedSession;
             await SearchScoresAsync();
         }
-    }
-
-    private async Task ChangeSubjectAsync(string selectedSubject)
-    {
-        subject = selectedSubject;
-        await SearchScoresAsync();
     }
 
     private async Task ChangeTermAsync(string selectedTerm)
@@ -191,19 +157,22 @@ else
         await SearchScoresAsync();
     }
 
-    protected override async Task OnInitializedAsync()
+   protected override async Task OnInitializedAsync()
     {
-        await AppUser.InitializeAsync();
+       if(!AppUser.IsSignedIn)
+        {
+            await AppUser.InitializeAsync();
+        }
+        
         await LoadAsync();
-        //StateHasChanged();
     }
 
     protected async Task SearchScoresAsync()
     {
         busy = true;
 
-        scores = await StudentScoreService.GetAllAsync(schoolId: AppUser.SchoolId, classId: classId,
-                subject: subject, examType: examType, term: int.Parse(term), session: session.Year);
+        scores = await StudentScoreService.GetAllAsync(studentId: AppUser.Id,
+                examType: examType, term: term, session: session.Year);
 
         busy = false;
     }

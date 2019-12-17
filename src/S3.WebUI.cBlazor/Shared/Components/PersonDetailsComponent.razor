@@ -24,9 +24,9 @@
             <MatDatePicker @bind-Value="Person.DateOfBirth" Label="Date Of Birth" Required="DateOfBirthRequired"></MatDatePicker>
         </div>
         <div class="form-group col-md-6">
-            <MatSelect @bind-Value="Person.Gender" Label="Gender*" Required="true" Enhanced="true">
-                <MatOption Value="Male">Male</MatOption>
-                <MatOption Value="Female">Female</MatOption>
+            <MatSelect TValue="string" @bind-Value="Person.Gender" Label="Gender*" Required="true" Enhanced="true">
+                <MatOptionString Value="Male">Male</MatOptionString>
+                <MatOptionString Value="Female">Female</MatOptionString>
             </MatSelect>
         </div>
     </div>

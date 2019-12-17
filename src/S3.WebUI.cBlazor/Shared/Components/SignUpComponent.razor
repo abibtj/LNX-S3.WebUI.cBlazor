@@ -1,0 +1,234 @@
+﻿@inject IIdentityService IdentityService
+@inject IMiscellaneousService MiscellaneousService
+@inject IMatToaster Toaster
+
+
+<EditForm Model="SignUp" OnValidSubmit="@SignUpAsync">
+    <PeterLeslieMorris.Blazor.Validation.Validate />
+    <MatDialog IsOpen="@SignUpDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="false">
+
+        <MatDialogTitle>Sign Up</MatDialogTitle>
+
+        <MatDialogContent>
+            <br />
+            <p>Manage <strong>@Person.FullName</strong>'s sign up.</p>
+
+            <ValidationSummary />
+
+            @*Sign Up Details*@
+
+            @*<div>
+                @if (!Person.IsSignedUp)
+                {
+                    <p><MatTextField OnFocusOut="CheckUsernameAvailabilityAsync" @bind-Value="SignUp.Username" Label="Username" HelperText="@usernameAvailabilityText" HelperTextPersistent="true" InputClass="@(usernameAvailable? "green-font": "red-font")" Icon="person" IconTrailing="true" FullWidth="true" Required="true"></MatTextField></p>
+
+                    <p><MatTextField @bind-Value="SignUp.Password" Label="Password" Type="@(showPassword ? "text" : "password")" IconOnClick="ToggleShowPassword" Icon="@(showPassword ? "radio_button_unchecked" : "remove_red_eye")" IconTrailing="true" FullWidth="true" Required="true"></MatTextField></p>
+
+                    <p><MatTextField @bind-Value="SignUp.ConfirmPassword" Label="Confirm Password" Type="@(showPassword ? "text" : "password")" IconOnClick="ToggleShowPassword" Icon="@(showPassword ? "radio_button_unchecked" : "remove_red_eye")" IconTrailing="true" FullWidth="true" Required="true"></MatTextField></p>
+                }
+                else
+                {
+                    <p>
+                        This user is already signed up.
+                        <MatButton Type="button" OnClick="RemoveSignUpAsync"><span class="@(busyRemovingSignUp? "oi oi-loop-circular spinning" : "")"></span>Remove Sign Up</MatButton>
+                    </p>
+                }
+
+            </div>*@
+
+            <br />
+            @*Role*@
+            <MatAccordion>
+                <MatExpansionPanel @bind-Expanded="rolePanelExpanded">
+                    <MatExpansionPanelSummary>
+                        <MatExpansionPanelHeader>Roles</MatExpansionPanelHeader>
+                    </MatExpansionPanelSummary>
+                    <MatExpansionPanelDetails>
+
+                        <div class="form-group">
+
+                            <MatSelect TValue="string" Label="Role*" ValueChanged="AddRole" Required="true" Enhanced="true">
+                                @if (!(AssignableRoles is null))
+                                {
+                                    @foreach (var role in AssignableRoles)
+                                    {
+                                        <MatOptionString Value="@role">@role</MatOptionString>
+                                    }
+                                }
+                            </MatSelect>
+                        </div>
+                        <br />
+
+                        <table class="table table-striped">
+                            <tbody>
+                                @if (!(PersonRoles is null))
+                                {
+                                    @foreach (var role in PersonRoles)
+                                    {
+                                        <tr>
+                                            <td>@(PersonRoles.IndexOf(role) + 1)</td>
+                                            <td>@role</td>
+                                            <td>
+                                                <MatIconButton OnClick="@(() => RemoveRole(@role))" Icon="delete_forever" Attributes="@(new Dictionary<string, object>() { { "title", "Remove Role" }, { "type", "button" } })"></MatIconButton>
+                                            </td>
+                                        </tr>
+                                    }
+                                }
+                            </tbody>
+                        </table>
+                    </MatExpansionPanelDetails>
+                </MatExpansionPanel>
+            </MatAccordion>
+
+        </MatDialogContent>
+
+        <MatDialogActions>
+            <MatButton Type="button" OnClick="CloseDialogs">Cancel</MatButton>
+            @if (!Person.IsSignedUp)
+            {
+                <MatButton Type="submit"><span class="@(busy? "oi oi-loop-circular spinning" : "")"></span>Sign Up</MatButton>
+            }
+            else
+            {
+                <MatButton Type="button" OnClick="ShowResetPasswordDialog">Reset Password</MatButton>
+            }
+        </MatDialogActions>
+
+    </MatDialog>
+</EditForm>
+
+
+@code {
+
+    private ResetPassword resetPassword;
+    //private Mode mode = Mode.None;
+
+    private bool busy;
+    //private bool busyRemovingSignUp;
+    private bool rolePanelExpanded;
+    private bool SignUpDialogIsOpened;
+    //private bool resetPasswordDialogIsOpened;
+    private bool usernameAvailable;
+    private bool showPassword;
+
+    //private string usernameAvailabilityText;
+
+
+    [Parameter] public List<string> AssignableRoles { get; set; }
+    [Parameter] public List<string> PersonRoles { get; set; }
+
+    [Parameter] public Person Person { get; set; }
+    [Parameter] public SignUp SignUp { get; set; }
+
+    private void AddRole(string selectedRole)
+    {
+        if (!(PersonRoles.Contains(selectedRole)) && !string.IsNullOrEmpty(selectedRole))
+        {
+            PersonRoles.Insert(0, selectedRole);
+            SignUp.Roles = PersonRoles.ToArray();
+            AssignableRoles.Remove(selectedRole);
+        }
+    }
+
+    private async Task CheckUsernameAvailabilityAsync()
+    {
+        @*@if (!string.IsNullOrEmpty(SignUp.Username))
+        {
+            usernameAvailable = await MiscellaneousService.CheckUsernameAvailabilityAsync(SignUp.Username);
+            if (usernameAvailable)
+            {
+                usernameAvailabilityText = "This username is available.";
+            }
+            else
+            {
+                usernameAvailabilityText = "This username is not available.";
+            }
+        }*@
+    }
+
+    private void CloseDialogs()
+    {
+        // Reset fields to their defaults
+        SignUpDialogIsOpened = false;
+        rolePanelExpanded = false;
+        showPassword = false;
+
+        //usernameAvailabilityText = null;
+        SignUp = null;
+    }
+
+    private void DialogIsOpenedChanged(bool isOpened)
+    {
+        if (!isOpened)
+        {
+            CloseDialogs();
+        }
+    }
+
+    //protected override async Task OnInitializedAsync()
+    //{
+
+    //}
+
+    private void RemoveRole(string role)
+    {
+        PersonRoles.Remove(role);
+
+        if (Person is Parent && !PersonRoles.Contains(Role.Parent))
+        {
+            PersonRoles.Add(Role.Parent); // The role remains Parent whether removed or not.
+        }
+        else if (Person is Student && !PersonRoles.Contains(Role.Student))
+        {
+            PersonRoles.Add(Role.Student); // The role remains Student whether removed or not.
+        }
+
+        SignUp.Roles = PersonRoles.ToArray();
+        AssignableRoles.Add(role);
+        AssignableRoles.Sort();
+    }
+
+    private async Task RemoveSignUpAsync()
+    {
+        //busyRemovingSignUp = true; // Don't use busy = true; because another control on the same page uses it, else, the two controls will show spinning icon.
+
+        //await IdentityService.RemoveSignUpAsync(Person.Id);
+        //CloseDialogs();
+        //Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+
+        //busyRemovingSignUp = false;
+    }
+
+    private void ShowResetPasswordDialog()
+    {
+        resetPassword = new ResetPassword { UserId = Person.Id };
+
+        //mode = Mode.ResetPassword;
+        //resetPasswordDialogIsOpened = true;
+    }
+
+    private async Task SignUpAsync()
+    {
+        busy = true;
+
+        if (!Person.IsSignedUp)
+        {
+            if (usernameAvailable)
+            {
+                await IdentityService.SignUpAsync(SignUp);
+                CloseDialogs();
+                Toaster.Add("Your request is being processed. Click Refresh if no change is seen shortly.", MatToastType.Info, "Request Processing", "info");
+            }
+            else
+            {
+                Toaster.Add("The specified username is already taken. Please, choose another one.", MatToastType.Danger, "Unavailable Username", "error");
+            }
+        }
+
+        busy = false;
+    }
+
+    private void ToggleShowPassword()
+       => showPassword = !showPassword;
+
+}

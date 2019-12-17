@@ -13,7 +13,7 @@
 
 @if (!(classes is null))
 {
-    <MatButton OnClick="ShowAddClassDialogAsync" Icon="add">Add Class</MatButton>
+    <MatButton OnClick="ShowAddClassDialogAsync" Icon="add_to_photos">Add Class</MatButton>
     <MatButton OnClick="LoadAsync" Icon="refresh">Refresh</MatButton>
 
     <img class="@(busy? "show-gif": "hide-gif")" src="/images/loading.gif" />
@@ -26,7 +26,7 @@
         <MatTableRow>
             <td>@context.Name</td>
             <td>
-                <MatIconButton OnClick="@(() => ShowCloneClassDialog(context.Id))" Icon="edit" Attributes="@(new Dictionary<string, object>() { { "title", "Clone Class" } })"></MatIconButton>
+                <MatIconButton OnClick="@(() => ShowCloneClassDialog(context.Id))" Icon="file_copy" Attributes="@(new Dictionary<string, object>() { { "title", "Clone Class" } })"></MatIconButton>
                 <MatIconButton OnClick="@(() => ShowUpdateClassDialogAsync(context.Id))" Icon="edit" Attributes="@(new Dictionary<string, object>() { { "title", "Edit Class' Information" } })"></MatIconButton>
                 <MatIconButton OnClick="@(() => ShowDeleteClassDialog(context.Id))" Icon="delete_forever" Attributes="@(new Dictionary<string, object>() { { "title", "Delete Class" } })"></MatIconButton>
             </td>
@@ -48,7 +48,7 @@ else
 {
     <EditForm Model="_class" OnValidSubmit="Add_UpdateAsync">
         <PeterLeslieMorris.Blazor.Validation.Validate />
-        <MatDialog IsOpen="@addUpdateDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+        <MatDialog IsOpen="@addUpdateDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="false">
 
             <MatDialogTitle>@add_UpdateTitle</MatDialogTitle>
 
@@ -64,11 +64,11 @@ else
                     </div>
                     <div class="row">
                         <div class="form-group col-md-12">
-                            <MatSelect Value="@classCategory" ValueChanged="LoadSubjectsAsync" Label="Category*" Required="true" Enhanced="true">
-                                <MatOption Value="Nursery">Nursery</MatOption>
-                                <MatOption Value="Primary">Primary</MatOption>
-                                <MatOption Value="Junior Secondary">Junior Secondary</MatOption>
-                                <MatOption Value="Senior Secondary">Senior Secondary</MatOption>
+                            <MatSelect TValue="string" Value="@classCategory" ValueChanged="LoadSubjectsAsync" Label="Category*" Required="true" Enhanced="true">
+                                <MatOptionString Value="Nursery">Nursery</MatOptionString>
+                                <MatOptionString Value="Primary">Primary</MatOptionString>
+                                <MatOptionString Value="Junior Secondary">Junior Secondary</MatOptionString>
+                                <MatOptionString Value="Senior Secondary">Senior Secondary</MatOptionString>
                             </MatSelect>
                         </div>
                     </div>
@@ -85,7 +85,8 @@ else
                         </MatExpansionPanelSummary>
                         <MatExpansionPanelDetails>
                             <div class="form-group">
-                                <S3MatAutoComplete Collection="availableSubjects" @bind-Value="selectedSubject" OnOpenedChanged="AddSubject" ItemType="string" Label="Select Subject" ShowClearButton="true"></S3MatAutoComplete>
+                                @*<MatAutoCompleteList Items="availableSubjects" @bind-Value="selectedSubject" OnOpenedChanged="AddSubject" TItem="string" Label="Select Subject" ShowClearButton="true"></MatAutoCompleteList>*@
+                                <MatAutocompleteList TItem="string" Items="availableSubjects" @bind-Value="selectedSubject" OnOpenedChanged="AddSubject" Label="Select Subject" ShowClearButton="true"></MatAutocompleteList>
                                 <MatButton Type="button" OnClick="AddSubject" Icon="library_add">Add</MatButton>
                             </div>
                             <br />
@@ -124,7 +125,7 @@ else
 {
     <EditForm Model="_class" OnValidSubmit="Add_UpdateAsync">
         <PeterLeslieMorris.Blazor.Validation.Validate />
-        <MatDialog IsOpen="@cloneDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+        <MatDialog IsOpen="@cloneDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="false">
 
             <MatDialogTitle>Clone  Class</MatDialogTitle>
 
@@ -155,7 +156,7 @@ else
 @*Delete*@
 @if (!(_class is null) && (mode == Mode.Delete))
 {
-    <MatDialog IsOpen="@deleteDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="true">
+    <MatDialog IsOpen="@deleteDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="true">
 
         <MatDialogTitle>Delete Class?</MatDialogTitle>
 
@@ -188,9 +189,9 @@ else
     private string classCategory;
 
     private Mode mode = Mode.None;
-    private bool addUpdateDialogIsOpen;
-    private bool cloneDialogIsOpen;
-    private bool deleteDialogIsOpen;
+    private bool addUpdateDialogIsOpened;
+    private bool cloneDialogIsOpened;
+    private bool deleteDialogIsOpened;
     private bool subjectPanelExpanded;
     private bool busy;
     private bool loadFailed;
@@ -258,9 +259,9 @@ else
     private void CloseDialogs()
     {
         // Reset fields to their defaults
-        addUpdateDialogIsOpen = false;
-        deleteDialogIsOpen = false;
-        cloneDialogIsOpen = false;
+        addUpdateDialogIsOpened = false;
+        deleteDialogIsOpened = false;
+        cloneDialogIsOpened = false;
         subjectPanelExpanded = false;
 
         _class = null;
@@ -284,7 +285,7 @@ else
         busy = false;
     }
 
-    private void DialogIsOpenChanged(bool isOpened)
+    private void DialogIsOpenedChanged(bool isOpened)
     {
         if (!isOpened)
         {
@@ -349,9 +350,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-        await AppUser.InitializeAsync();
+        if(!AppUser.IsSignedIn)
+        {
+            await AppUser.InitializeAsync();
+        }
+        
         await LoadAsync();
-        //StateHasChanged();
     }
 
     private void RemoveSubject(string subject)
@@ -374,7 +378,7 @@ else
         add_UpdateButtonLabel = "Add";
 
         mode = Mode.Add;
-        addUpdateDialogIsOpen = true;
+        addUpdateDialogIsOpened = true;
 
         busy = false;
     }
@@ -388,7 +392,7 @@ else
         clonedClassName = _class.Name;
 
         mode = Mode.Clone;
-        cloneDialogIsOpen = true;
+        cloneDialogIsOpened = true;
 
         busy = false;
     }
@@ -401,7 +405,7 @@ else
         _class = classes.FirstOrDefault(x => x.Id == id);
 
         mode = Mode.Delete;
-        deleteDialogIsOpen = true;
+        deleteDialogIsOpened = true;
 
         busy = false;
     }
@@ -427,7 +431,7 @@ else
         add_UpdateButtonLabel = "Update";
 
         mode = Mode.Update;
-        addUpdateDialogIsOpen = true;
+        addUpdateDialogIsOpened = true;
 
         busy = false;
     }

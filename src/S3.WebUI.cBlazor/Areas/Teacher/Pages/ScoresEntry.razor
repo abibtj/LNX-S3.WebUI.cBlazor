@@ -12,17 +12,17 @@
 @if (!(scoresEntryTasks is null))
 {
     <MatSelect @bind-Value="term" Label="Term*" Required="true" Enhanced="true">
-        <MatOption Value="1">First Term</MatOption>
-        <MatOption Value="2">Second Term</MatOption>
-        <MatOption Value="3">Third Term</MatOption>
+        <MatOption Value="@Term.FirstTerm">First Term</MatOption>
+        <MatOption Value="@Term.SecondTerm">Second Term</MatOption>
+        <MatOption Value="@Term.ThirdTerm">Third Term</MatOption>
     </MatSelect>
 
     <MatSelect @bind-Value="examType" Label="Exam Type*" Required="true" Enhanced="true">
-        <MatOption Value="Continuos Assessment">Continuos Assessment (CA)</MatOption>
-        <MatOption Value="First Exam">First Exam</MatOption>
-        <MatOption Value="Second Exam">Second Exam</MatOption>
-        <MatOption Value="Class Activities">Class Activities</MatOption>
-        <MatOption Value="Homework">Homework</MatOption>
+        <MatOption Value="@ExamType.CA">C. A.</MatOption>
+        <MatOption Value="@ExamType.FirstExam">First Exam</MatOption>
+        <MatOption Value="@ExamType.SecondExam">Second Exam</MatOption>
+        <MatOption Value="@ExamType.ClassActivities">Class Activities</MatOption>
+        <MatOption Value="@ExamType.Homework">Homework</MatOption>
     </MatSelect>
 
     <MatDatePicker @bind-Value="session" Label="Session"></MatDatePicker>
@@ -64,7 +64,7 @@ else
 {
     <EditForm Model="classSubjectScores" OnValidSubmit="Add_UpdateAsync">
         <PeterLeslieMorris.Blazor.Validation.Validate />
-        <MatDialog IsOpen="scoresEntryDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+        <MatDialog IsOpen="scoresEntryDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="false">
 
             <MatDialogTitle> @task.Subject - @task.ClassName</MatDialogTitle>
 
@@ -141,13 +141,13 @@ else
     //private List<Student> studentsOfferingSubject;
 
     private Mode mode = Mode.None;
-    private bool scoresEntryDialogIsOpen;
+    private bool scoresEntryDialogIsOpened;
     private bool busy;
     private bool loadFailed;
     private bool scoresExist;
     private bool sessionExpired;
 
-    private string term; // To be typecast to int
+    private string term;
     private string examType;
     private DateTime? session = DateTime.UtcNow;
     private string errorTitle = "Error";
@@ -159,13 +159,27 @@ else
     {
         busy = true;
 
+        // No need sending StudentScore with null mark to the backend api
+        var classSubjectScoresToSave = new ClassSubjectScores
+        {
+            StudentScores = new List<StudentScore>()
+        };
+
+        foreach (var studentScore in classSubjectScores.StudentScores)
+        {
+            if (studentScore.Mark.HasValue)
+            {
+                classSubjectScoresToSave.StudentScores.Add(studentScore);
+            }
+        }
+
         if (mode == Mode.Add)
         {
-            await StudentScoreService.CreateAsync(classSubjectScores);
+            await StudentScoreService.CreateAsync(classSubjectScoresToSave);
         }
         else if (mode == Mode.Update)
         {
-            await StudentScoreService.UpdateAsync(classSubjectScores);
+            await StudentScoreService.UpdateAsync(classSubjectScoresToSave);
         }
 
         await LoadAsync();
@@ -178,14 +192,14 @@ else
     private void CloseDialogs()
     {
         // Reset fields to their defaults
-        scoresEntryDialogIsOpen = false;
+        scoresEntryDialogIsOpened = false;
         scoresExist = false;
         task = null;
 
         mode = Mode.None;
     }
 
-    private void DialogIsOpenChanged(bool isOpened)
+    private void DialogIsOpenedChanged(bool isOpened)
     {
         if (!isOpened)
         {
@@ -239,10 +253,12 @@ else
 
     protected override async Task OnInitializedAsync()
     {
+        if(!AppUser.IsSignedIn)
+        {
+            await AppUser.InitializeAsync();
+        }
 
-        await AppUser.InitializeAsync();
         await LoadAsync();
-        //StateHasChanged();
     }
 
     private async Task ShowScoresEnteryDialogAsync(string id)
@@ -266,11 +282,10 @@ else
             var studentScores = new List<StudentScore>();
             Student[] studentsOfferingSubject;
 
-            //task = await ScoresEntryTaskService.GetAsync(id);
-            task = scoresEntryTasks.FirstOrDefault(x => x.Id == id);
+            task = scoresEntryTasks.First(x => x.Id == id);
 
             var existingScores = await StudentScoreService.GetAllAsync(schoolId: task.SchoolId, classId: task.ClassId,
-                subject: task.Subject, examType: examType, term: int.Parse(term), session: session?.Date.Year);
+                subject: task.Subject, examType: examType, term: term, session: session?.Date.Year);
 
             if (!(existingScores is null) && existingScores.Length > 0)
             {
@@ -301,7 +316,8 @@ else
                                 StudentId = student.Id,
                                 StudentName = student.FullName,
                                 Subject = task.Subject,
-                                Term = int.Parse(term)
+                                Term = term,
+                                RuleId = task.RuleId
                             });
                         }
                     }
@@ -324,7 +340,8 @@ else
                         StudentId = student.Id,
                         StudentName = student.FullName,
                         Subject = task.Subject,
-                        Term = int.Parse(term)
+                        Term = term,
+                        RuleId = task.RuleId
                     });
                 }
             }
@@ -339,7 +356,7 @@ else
                 scoresExist = true;
             }
 
-            scoresEntryDialogIsOpen = true;
+            scoresEntryDialogIsOpened = true;
 
             busy = false;
         }

@@ -35,7 +35,7 @@
             <td>
                 @*@if (AppUser.IsSchoolAdmin || AppUser.IsAssistantSchoolAdmin) // School admin can add new parents
                     {*@
-                <MatIconButton OnClick="@(() => ShowSignUpDialog(context.Id))" Icon="accessibility" Attributes="@(new Dictionary<string, object>() { { "title", "Manage Sign Up" } })"></MatIconButton>
+                <MatIconButton OnClick="@(() => ShowSignUpDialog(context.Id))" Icon="exit_to_app" Attributes="@(new Dictionary<string, object>() { { "title", "Manage Sign Up" } })"></MatIconButton>
                 <MatIconButton OnClick="@(() => ShowUpdateParentDialogAsync(context.Id))" Icon="edit" Attributes="@(new Dictionary<string, object>() { { "title", "Edit Parent's Information" } })"></MatIconButton>
                 <MatIconButton OnClick="@(() => ShowDeleteParentDialog(context.Id))" Icon="delete_forever" Attributes="@(new Dictionary<string, object>() { { "title", "Delete Parent" } })"></MatIconButton>
                 @*}*@
@@ -56,9 +56,10 @@ else
 @*Add / Update*@
 @if (!(parents is null) && (mode == Mode.Add || mode == Mode.Update))
 {
+
     <EditForm Model="parent" OnValidSubmit="Add_UpdateAsync">
         <PeterLeslieMorris.Blazor.Validation.Validate />
-        <MatDialog IsOpen="@addUpdateDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+        <MatDialog IsOpen="@addUpdateDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="false">
 
             <MatDialogTitle>@add_UpdateTitle</MatDialogTitle>
 
@@ -112,9 +113,11 @@ else
 @*Sign Up, Remove Sign Up, Update User Roles*@
 @if (!(signUp is null) && !(parent is null) && (mode == Mode.SignUp))
 {
+    @*<SignUpComponent Person="parent" SignUp="signUp" PersonRoles="parentRoles" AssignableRoles="assignableRoles"></SignUpComponent>*@
+
     <EditForm Model="signUp" OnValidSubmit="@SignUpAsync">
         <PeterLeslieMorris.Blazor.Validation.Validate />
-        <MatDialog IsOpen="@signUpDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+        <MatDialog IsOpen="@signUpDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="false">
 
             <MatDialogTitle>Sign Up</MatDialogTitle>
 
@@ -156,12 +159,12 @@ else
 
                             <div class="form-group">
 
-                                <MatSelect Label="Role*" ValueChanged="AddRole" Required="true" Enhanced="true">
+                                <MatSelect TValue="string" Label="Role*" ValueChanged="AddRole" Required="true" Enhanced="true">
                                     @if (!(assignableRoles is null))
                                     {
                                         @foreach (var role in assignableRoles)
                                         {
-                                            <MatOption Value="@role">@role</MatOption>
+                                            <MatOptionString Value="@role">@role</MatOptionString>
                                         }
                                     }
                                 </MatSelect>
@@ -210,7 +213,7 @@ else
 {
     <EditForm Model="resetPassword" OnValidSubmit="@ResetPasswordAsync">
         <PeterLeslieMorris.Blazor.Validation.Validate />
-        <MatDialog IsOpen="@resetPasswordDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="false">
+        <MatDialog IsOpen="@resetPasswordDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="false">
 
             <MatDialogTitle>Reset Password</MatDialogTitle>
 
@@ -242,7 +245,7 @@ else
 @*Delete*@
 @if (!(parent is null) && (mode == Mode.Delete))
 {
-    <MatDialog IsOpen="@deleteDialogIsOpen" IsOpenChanged="DialogIsOpenChanged" CanBeClosed="true">
+    <MatDialog IsOpen="@deleteDialogIsOpened" IsOpenChanged="DialogIsOpenedChanged" CanBeClosed="true">
 
         <MatDialogTitle>Delete Parent?</MatDialogTitle>
 
@@ -276,11 +279,11 @@ else
     private List<string> parentRoles;
 
     private Mode mode = Mode.None;
-    private bool addUpdateDialogIsOpen;
-    private bool deleteDialogIsOpen;
+    private bool addUpdateDialogIsOpened;
+    private bool deleteDialogIsOpened;
     private bool rolePanelExpanded;
-    private bool signUpDialogIsOpen;
-    private bool resetPasswordDialogIsOpen;
+    private bool signUpDialogIsOpened;
+    private bool resetPasswordDialogIsOpened;
     private bool busy;
     private bool busyRemovingSignUp;
     private bool loadFailed;
@@ -362,12 +365,13 @@ else
     private void CloseDialogs()
     {
         // Reset fields to their defaults
-        addUpdateDialogIsOpen = false;
-        deleteDialogIsOpen = false;
-        signUpDialogIsOpen = false;
-        resetPasswordDialogIsOpen = false;
+        addUpdateDialogIsOpened = false;
+        deleteDialogIsOpened = false;
+        signUpDialogIsOpened = false;
+        resetPasswordDialogIsOpened = false;
         rolePanelExpanded = false;
         showPassword = false;
+        usernameAvailable = false;
 
         usernameAvailabilityText = null;
         parent = null;
@@ -389,7 +393,7 @@ else
         busy = false;
     }
 
-    private void DialogIsOpenChanged(bool isOpened)
+    private void DialogIsOpenedChanged(bool isOpened)
     {
         if (!isOpened)
         {
@@ -445,11 +449,14 @@ else
         busy = false;
     }
 
-    protected override async Task OnInitializedAsync()
+   protected override async Task OnInitializedAsync()
     {
-        await AppUser.InitializeAsync();
+       if(!AppUser.IsSignedIn)
+        {
+            await AppUser.InitializeAsync();
+        }
+        
         await LoadAsync();
-        //StateHasChanged();
     }
 
     private void RemoveRole(string role)
@@ -492,7 +499,7 @@ else
         add_UpdateButtonLabel = "Add";
         add_RemoveAddressButtonLabel = "Add";
         mode = Mode.Add;
-        addUpdateDialogIsOpen = true;
+        addUpdateDialogIsOpened = true;
 
         busy = false;
     }
@@ -505,7 +512,7 @@ else
         parent = parents.FirstOrDefault(x => x.Id == id);
 
         mode = Mode.Delete;
-        deleteDialogIsOpen = true;
+        deleteDialogIsOpened = true;
 
         busy = false;
     }
@@ -516,7 +523,7 @@ else
         resetPassword = new ResetPassword { UserId = parent.Id };
 
         mode = Mode.ResetPassword;
-        resetPasswordDialogIsOpen = true;
+        resetPasswordDialogIsOpened = true;
 
         busy = false;
     }
@@ -549,7 +556,7 @@ else
         }
 
         mode = Mode.SignUp;
-        signUpDialogIsOpen = true;
+        signUpDialogIsOpened = true;
 
         busy = false;
     }
@@ -570,7 +577,7 @@ else
         add_UpdateButtonLabel = "Update";
 
         mode = Mode.Update;
-        addUpdateDialogIsOpen = true;
+        addUpdateDialogIsOpened = true;
 
         busy = false;
     }

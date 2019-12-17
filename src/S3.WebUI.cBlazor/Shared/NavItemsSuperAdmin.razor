@@ -1,5 +1,15 @@
-﻿@*<MatNavItem Href="users"><MatIcon Icon="people"></MatIcon>&nbsp; Users</MatNavItem>*@
-<MatNavItem Href="schadm/teachers"><MatIcon Icon="people"></MatIcon>&nbsp; Teachers</MatNavItem>
-<MatNavItem Href="schadm/students"><MatIcon Icon="people_outline"></MatIcon>&nbsp; Students</MatNavItem>
-<MatNavItem Href="schadm/parents"><MatIcon Icon="people_outline"></MatIcon>&nbsp; Parents</MatNavItem>
-<MatNavItem Href="spadm/schools"><MatIcon Icon="school"></MatIcon>&nbsp; Schools</MatNavItem>
+﻿
+<MatNavSubMenu Expanded="true">
+    <MatNavSubMenuHeader>
+        <MatNavItem AllowSelection="false"><MatIcon Icon="person"></MatIcon>&nbsp; Super Admin</MatNavItem>
+    </MatNavSubMenuHeader>
+    <MatDivider></MatDivider>
+
+    <MatNavSubMenuList>
+        <MatNavItem Href="spadm/schools">Schools</MatNavItem>
+        <MatNavItem Href="schadm/teachers">Teachers</MatNavItem>
+        <MatNavItem Href="schadm/students">Students</MatNavItem>
+        <MatNavItem Href="schadm/parents">Parents</MatNavItem>
+    </MatNavSubMenuList>
+</MatNavSubMenu>
+<MatDivider></MatDivider>
