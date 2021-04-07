@@ -85,12 +85,12 @@ else
                         <div class="form-group col-md-6 offset-md-6">
                             <MatSelect @bind-Value="student.ClassId" Label="Class*" Required="true" Enhanced="true">
                                 @if (!(classes is null))
-                                {
-                                    @foreach (var _class in classes)
                                     {
+                                    @foreach (var _class in classes)
+                                        {
                                         <MatOption Value="@_class.Id">@_class.Name</MatOption>
+                                        }
                                     }
-                                }
                             </MatSelect>
                         </div>
                     </div>
@@ -502,17 +502,10 @@ else
 
     private async Task CheckUsernameAvailabilityAsync()
     {
-        @if (!string.IsNullOrEmpty(signUp.Username))
+        if (!string.IsNullOrEmpty(signUp.Username))
         {
             usernameAvailable = await MiscellaneousService.CheckUsernameAvailabilityAsync(signUp.Username);
-            if (usernameAvailable)
-            {
-                usernameAvailabilityText = "This username is available.";
-            }
-            else
-            {
-                usernameAvailabilityText = "This username is not available.";
-            }
+            usernameAvailabilityText = usernameAvailable ? "This username is available." : "This username is not available.";
         }
     }
 
@@ -608,11 +601,11 @@ else
 
     protected override async Task OnInitializedAsync()
     {
-       if(!AppUser.IsSignedIn)
+        if (!AppUser.IsSignedIn)
         {
             await AppUser.InitializeAsync();
         }
-        
+
         await LoadAsync();
     }
 
@@ -786,7 +779,7 @@ else
         }
 
         // Load subjects from json file
-        availableSubjects = await HttpClient.GetJsonAsync<List<string>>($"json-data/subjects/{_class.Category}.json");
+        availableSubjects = await HttpClient.GetJSONAsync<List<string>>($"json-data/subjects/{_class.Category}.json");
 
         foreach (var sub in studentSubjects)
         {

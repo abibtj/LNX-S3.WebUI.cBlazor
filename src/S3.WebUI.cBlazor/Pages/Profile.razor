@@ -156,7 +156,7 @@ else
 
     private bool busy;
     private bool loadFailed;
-    private bool isTeacher;
+    bool isTeacher;
     private bool isParent;
     private bool sessionExpired;
 
@@ -258,7 +258,7 @@ else
             //Configuration.GetSection("states").Bind(state);
             //states = state.States.ToList();
 
-            states = await HttpClient.GetJsonAsync<List<string>>("json-data/states.json");
+            states = await HttpClient.GetJSONAsync<List<string>>("json-data/states.json");
         }
         catch (System.Net.Http.HttpRequestException ex)
         {

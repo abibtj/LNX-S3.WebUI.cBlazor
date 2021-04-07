@@ -1,11 +1,7 @@
 using System;
-using System.IO;
-using System.Linq;
 using System.Net.Http;
-using System.Net.Http.Headers;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
-using Microsoft.AspNetCore.Blazor;
 using Microsoft.AspNetCore.Components;
 using Microsoft.Extensions.Configuration;
 using S3.WebUI.cBlazor.Shared.Models;
@@ -24,7 +20,7 @@ namespace S3.WebUI.cBlazor.Shared.Services
             => (_httpClient, _appSettings, _configuration) = (httpClient, appSettings, configuration);
 
 
-        public async Task<T> GetAsync(string id, string[]? include = null) 
+        public async Task<T> GetAsync(string id, string[] include = null) 
             => await _httpClient.GetJsonAsync<T>($"{_appSettings.ApiUrl}/{GetEndPoint("get", typeof(T), typeof(N))}/{id}{IncludeStringHelper.GetString(include)}");
 
         public async Task<T[]> GetAllAsync(string? schoolId = null, string[]? include = null) 

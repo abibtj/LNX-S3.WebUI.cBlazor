@@ -343,7 +343,7 @@ else
         classCategory = category;
 
         // Load subjects from json file
-        availableSubjects = await HttpClient.GetJsonAsync<List<string>>($"json-data/subjects/{category}.json");
+        availableSubjects = await HttpClient.GetJSONAsync<List<string>>($"json-data/subjects/{category}.json");
 
         classSubjects = new List<string>();
     }

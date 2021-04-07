@@ -1,97 +1,76 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.Web">
+﻿<Project Sdk="Microsoft.NET.Sdk.BlazorWebAssembly">
 
-  <PropertyGroup>
-    <TargetFramework>netstandard2.1</TargetFramework>
-    <UserSecretsId>2d38cf95-95b3-46e4-bfa3-68440a831b04</UserSecretsId>
-    <DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
-    <DockerfileContext>..\..</DockerfileContext>
+	<PropertyGroup>
+		<TargetFramework>net5.0</TargetFramework>
+		<UserSecretsId>2d38cf95-95b3-46e4-bfa3-68440a831b04</UserSecretsId>
+		<DockerDefaultTargetOS>Linux</DockerDefaultTargetOS>
+		<DockerfileContext>..\..</DockerfileContext>
 
-    <RazorLangVersion>3.0</RazorLangVersion>
-    
-    <LangVersion>8.0</LangVersion>
-    <Nullable>enable</Nullable>
-    <NoWarn>CS0168,CS1998,CS4014,CS8601,CS8602,CS8603,CS8604,CS8618,CS8620,CS8625,CS8632</NoWarn>
-    <!--warning CS0168: The variable 'e' is declared but never used.-->
-    <!--warning CS1998: This async method lacks 'await' operators and will run synchronously-->
-    <!--warning CS4014: Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call.-->
-    <!--warning CS8601: Possible null reference assignment.-->
-    <!--warning CS8602: Dereference of a possibly null reference.-->
-    <!--warning CS8603: Possible null reference return.-->
-    <!--warning CS8604: Possible null reference argument for parameter.-->
-    <!--warning CS8618: Non-nullable field is uninitialized.-->
-    <!--warning CS8620: Argument of type 'AddressValidator' cannot be used for parameter 'validator' of type 'IValidator<ParentAddress?>' in 'IRuleBuilderOptions<CreateParentCommand, ParentAddress?> IRuleBuilder<CreateParentCommand, ParentAddress?>.SetValidator(IValidator<ParentAddress?> validator, params string[] ruleSets)' due to differences in the nullability of reference types.-->
-    <!--warning CS8625: Cannot convert null literal to non-nullable reference type.-->
-    <!--warning CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.-->
-    
-  
-  <!--<BlazorLinkOnBuild>false</BlazorLinkOnBuild>-->
-  </PropertyGroup>
+		<LangVersion>9.0</LangVersion>
+    <!--<Nullable>enable</Nullable>-->
+		<NoWarn>CS0168,CS1998,CS4014,CS8601,CS8602,CS8603,CS8604,CS8618,CS8620,CS8625,CS8632</NoWarn>
+		<!--warning CS0168: The variable 'e' is declared but never used.-->
+		<!--warning CS1998: This async method lacks 'await' operators and will run synchronously-->
+		<!--warning CS4014: Because this call is not awaited, execution of the current method continues before the call is completed. Consider applying the 'await' operator to the result of the call.-->
+		<!--warning CS8601: Possible null reference assignment.-->
+		<!--warning CS8602: Dereference of a possibly null reference.-->
+		<!--warning CS8603: Possible null reference return.-->
+		<!--warning CS8604: Possible null reference argument for parameter.-->
+		<!--warning CS8618: Non-nullable field is uninitialized.-->
+		<!--warning CS8620: Argument of type 'AddressValidator' cannot be used for parameter 'validator' of type 'IValidator<ParentAddress?>' in 'IRuleBuilderOptions<CreateParentCommand, ParentAddress?> IRuleBuilder<CreateParentCommand, ParentAddress?>.SetValidator(IValidator<ParentAddress?> validator, params string[] ruleSets)' due to differences in the nullability of reference types.-->
+		<!--warning CS8625: Cannot convert null literal to non-nullable reference type.-->
+		<!--warning CS8632: The annotation for nullable reference types should only be used in code within a '#nullable' annotations context.-->
 
-  <ItemGroup>
-    
-    <PackageReference Include="Blazor.FlexGrid" Version="0.10.0" />
-    <PackageReference Include="Blazored.LocalStorage" Version="2.1.1" />
-    <!--<PackageReference Include="Microsoft.AspNetCore.Mvc" Version="2.2.0" />-->
-    <!--<PackageReference Include="Microsoft.AspNetCore.Razor" Version="2.2.0" />-->
-    <PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" Version="1.1.0-dotnetcore3.1.0-preview3.19555.2" />
-    <PackageReference Include="MatBlazor" Version="2.0.0" />
-    <!--<PackageReference Include="DinkToPdf" Version="1.0.8" />-->
-    <PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.9.5" />
-    
-    <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.0" />
-    <!--default packages-->
-    <PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.1.0-preview4.19579.2" />
+
+		<!--<BlazorLinkOnBuild>false</BlazorLinkOnBuild>-->
+	</PropertyGroup>
+
+	<ItemGroup>
+
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly" Version="5.0.5" />
+		<PackageReference Include="Microsoft.AspNetCore.Components.WebAssembly.DevServer" Version="5.0.5" PrivateAssets="all" />
+		<PackageReference Include="System.Net.Http.Json" Version="5.0.0" />
+
+		<PackageReference Include="Blazor.FlexGrid" Version="1.0.0" />
+		<PackageReference Include="Blazored.LocalStorage" Version="3.0.0" />
+		<PackageReference Include="PeterLeslieMorris.Blazor.FluentValidation" Version="1.6.0" />
+		<PackageReference Include="MatBlazor" Version="2.9.0-develop-042" />
+		<PackageReference Include="Microsoft.VisualStudio.Azure.Containers.Tools.Targets" Version="1.10.8" />
+
+		<!--<PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="3.1.0" />-->
+		<!--default packages-->
+		<!--<PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.1.0-preview4.19579.2" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="3.1.0-preview4.19579.2" PrivateAssets="all" />
     <PackageReference Include="Microsoft.AspNetCore.Blazor.HttpClient" Version="3.1.0-preview4.19579.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.DevServer" Version="3.1.0-preview4.19579.2" PrivateAssets="all" />
-    <!--<PackageReference Include="Microsoft.AspNetCore.Blazor" Version="3.1.0-preview3.19555.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.Build" Version="3.1.0-preview3.19555.2" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.HttpClient" Version="3.1.0-preview3.19555.2" />
-    <PackageReference Include="Microsoft.AspNetCore.Blazor.DevServer" Version="3.1.0-preview3.19555.2" PrivateAssets="all" />-->
-    <!--<PackageReference Include="PDF.Core" Version="2019.8.9" />--><!--Not compartible with .net standard-->
-    <PackageReference Include="PuppeteerSharp" Version="2.0.0" />
-    <!--<PackageReference Include="RazorLight" Version="2.0.0-beta1" />--><!--Only works with .cshtml-->
-    <!--<PackageReference Include="System.Runtime.Loader" Version="4.3.0" />--><!--Linker / loader problem-->
-  </ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.Blazor.DevServer" Version="3.1.0-preview4.19579.2" PrivateAssets="all" />-->
 
-  <ItemGroup>
-    <EmbeddedResource Include=".\Environment\appsettings.apiurl.dev.json" Condition="'$(Configuration)' == 'Debug'">
-      <LogicalName>appsettings.json</LogicalName>
-    </EmbeddedResource>
-    <EmbeddedResource Include=".\Environment\appsettings.apiurl.docker.json" Condition="'$(Configuration)' == 'Release'">
-      <LogicalName>appsettings.json</LogicalName>
-    </EmbeddedResource>
-  </ItemGroup>
 
- <ItemGroup>
-    <EmbeddedResource Include="Configuration\appsettings.json" />
-    <EmbeddedResource Include="Configuration\appsettings.*.json" />
-</ItemGroup>
 
- <ItemGroup>
-	<BlazorLinkerDescriptor Include="Linker.xml" />
-</ItemGroup>
+		<PackageReference Include="PuppeteerSharp" Version="3.0.0" />
+	</ItemGroup>
 
-  <!--Added the following ItemGroup to enable DinkToPdf (HTML to PDF converter) work on local and remote machines-->
-  <!--<ItemGroup>
-    <None Update="DinkToPdf\v0.12.4\32 bit\libwkhtmltox.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="DinkToPdf\v0.12.4\32 bit\libwkhtmltox.dylib">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="DinkToPdf\v0.12.4\32 bit\libwkhtmltox.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="DinkToPdf\v0.12.4\64 bit\libwkhtmltox.dll">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="DinkToPdf\v0.12.4\64 bit\libwkhtmltox.dylib">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-    <None Update="DinkToPdf\v0.12.4\64 bit\libwkhtmltox.so">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>-->
+	<ItemGroup>
+		<EmbeddedResource Include=".\Environment\appsettings.apiurl.dev.json" Condition="'$(Configuration)' == 'Debug'">
+			<LogicalName>appsettings.json</LogicalName>
+		</EmbeddedResource>
+		<EmbeddedResource Include=".\Environment\appsettings.apiurl.docker.json" Condition="'$(Configuration)' == 'Release'">
+			<LogicalName>appsettings.json</LogicalName>
+		</EmbeddedResource>
+	</ItemGroup>
 
+	<!--<ItemGroup>
+		<BlazorLinkerDescriptor Include="Linker.xml" />
+	</ItemGroup>
+
+	<ItemGroup>
+		<Content Update="wwwroot\appsettings.Development.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\appsettings.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+		<Content Update="wwwroot\appsettings.Production.json">
+			<CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+		</Content>
+	</ItemGroup>-->
 </Project>

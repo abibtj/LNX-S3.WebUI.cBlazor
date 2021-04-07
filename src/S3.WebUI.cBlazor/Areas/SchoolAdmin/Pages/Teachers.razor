@@ -599,15 +599,15 @@ else
 
         if (AppUser.IsSchoolAdmin)
         {
-            assignableRoles = await HttpClient.GetJsonAsync<List<string>>("json-data/roles/school-admin.json");
+            assignableRoles = await HttpClient.GetJSONAsync<List<string>>("json-data/roles/school-admin.json");
         }
         else if (AppUser.IsAssistantSchoolAdmin)
         {
-            assignableRoles = await HttpClient.GetJsonAsync<List<string>>("json-data/roles/assistant-school-admin.json");
+            assignableRoles = await HttpClient.GetJSONAsync<List<string>>("json-data/roles/assistant-school-admin.json");
         }
         else if (AppUser.IsSuperAdmin)
         {
-            assignableRoles = await HttpClient.GetJsonAsync<List<string>>("json-data/roles/super-admin.json");
+            assignableRoles = await HttpClient.GetJSONAsync<List<string>>("json-data/roles/super-admin.json");
         }
 
         assignableRoles.Remove(Role.Student); // A teacher cannot be a student.

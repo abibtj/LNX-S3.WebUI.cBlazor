@@ -2,14 +2,16 @@
 @using Microsoft.AspNetCore.Components.Forms
 @using Microsoft.AspNetCore.Components.Routing
 @using Microsoft.AspNetCore.Components.Web
+@using Microsoft.AspNetCore.Components.Web.Virtualization
+@using Microsoft.AspNetCore.Components.WebAssembly.Http
 @using Microsoft.JSInterop
-#if(!Hosted)
+@*#if(!Hosted)*@
 @using S3.WebUI.cBlazor
 @using S3.WebUI.cBlazor.Shared
-#else
+@*#else*@
 @*@using S3.WebUI.cBlazor.Client
     @using S3.WebUI.cBlazor.Client.Shared*@
-#endif
+@*#endif*@
 
 @using Microsoft.Extensions.Configuration
 @using Microsoft.AspNetCore.Authorization
@@ -22,3 +24,5 @@
 @using S3.WebUI.cBlazor.Shared.Services
 @using S3.WebUI.cBlazor.Shared.Services.Interface
 @using Microsoft.Extensions.Logging
+
+@using System.Net.Http.Json

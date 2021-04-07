@@ -20,10 +20,10 @@ namespace S3.WebUI.cBlazor.Shared.Services
 
         public async Task SignUpAsync(SignUp signUp)
             => await _httpClient.PostJsonAsync($"{_appSettings.ApiUrl}/{_configuration.GetSection("endpoints")["signUp"]}", signUp);
-       
+
         public async Task<IdentityTokens> SignInAsync(SignIn signIn)
            => await _httpClient.PostJsonAsync<IdentityTokens>($"{_appSettings.ApiUrl}/{_configuration.GetSection("endpoints")["signIn"]}", signIn);
-      
+
         public async Task RemoveSignUpAsync(string userId)
            => await _httpClient.DeleteAsync($"{_appSettings.ApiUrl}/{_configuration.GetSection("endpoints")["removeSignup"]}/{userId}");
 

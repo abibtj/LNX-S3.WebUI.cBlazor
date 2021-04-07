@@ -30,15 +30,15 @@
         <MatDrawerContainer Style="width: 100vw; height: 100vh;">
             @if (AppUser.IsSignedIn)
             {
-                <MatDrawer @bind-Opened="navDrawerOpened">
+                <MatDrawer @bind-Opened="_navDrawerOpened">
                     <NavMenu />
                 </MatDrawer>
             }
 
             <MatDrawerContent>
                 <div class="container">
-                    <div  class="mat-elevation-z5">
-                    @Body
+                    <div class="mat-elevation-z5">
+                        @Body
                     </div>
                 </div>
             </MatDrawerContent>
@@ -56,11 +56,11 @@
         }
     }
 
-    bool navDrawerOpened = true;
+    bool _navDrawerOpened = true;
 
     void ToggleNavMenu()
     {
-        navDrawerOpened = !navDrawerOpened;
+        _navDrawerOpened = !_navDrawerOpened;
     }
 }
 

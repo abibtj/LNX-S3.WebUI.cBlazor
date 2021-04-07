@@ -1,0 +1,5 @@
+﻿<StaticWebAssets Version="1.0">
+  <ContentRoot BasePath="/" Path="C:\Users\ACER\source\repos\MyProjects\S3_net5.0\LNX-S3.WebUI.cBlazor\src\S3.WebUI.cBlazor\bin\Debug\net5.0\wwwroot\" />
+  <ContentRoot BasePath="_content/Blazor.FlexGrid" Path="C:\Users\ACER\.nuget\packages\blazor.flexgrid\1.0.0\build\..\staticwebassets\" />
+  <ContentRoot BasePath="_content/MatBlazor" Path="C:\Users\ACER\.nuget\packages\matblazor\2.9.0-develop-042\build\..\staticwebassets\" />
+</StaticWebAssets>

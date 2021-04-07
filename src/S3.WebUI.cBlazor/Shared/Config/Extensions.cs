@@ -16,8 +16,10 @@ using System;
 using Microsoft.Extensions.Configuration;
 using System.Collections.Generic;
 using System.Linq;
+using MatBlazor;
 using Microsoft.Extensions.Configuration.Json;
 using Microsoft.AspNetCore.Components;
+using PeterLeslieMorris.Blazor.Validation;
 
 namespace S3.WebUI.cBlazor.Shared.Config
 {
@@ -25,13 +27,17 @@ namespace S3.WebUI.cBlazor.Shared.Config
     {
         public static IServiceCollection RegisterShared(this IServiceCollection services)
         {
-            services.AddFlexGridServerSide(cfg =>
-            {
-                cfg.ApplyConfiguration(new SchoolStatisticsGridConfiguration());
-            });
-            services.TryAddScoped(typeof(ILazyDataSetLoader<>), typeof(NullLazyDataSetLoader<>));
-            services.TryAddScoped(typeof(ILazyDataSetItemManipulator<>), typeof(NullLazyDataSetItemManipulator<>));
-            services.TryAddScoped(typeof(ICreateItemHandle<,>), typeof(NullCreateItemHandler<,>));
+            //services.AddFlexGridServerSide(cfg =>
+            //{
+            //    cfg.ApplyConfiguration(new SchoolStatisticsGridConfiguration());
+            //});
+            
+            services.AddFlexGrid();
+            //services.TryAddScoped(typeof(ILazyDataSetLoader<>), typeof(NullLazyDataSetLoader<>));
+            //services.TryAddScoped(typeof(ILazyDataSetItemManipulator<>), typeof(NullLazyDataSetItemManipulator<>));
+            //services.TryAddScoped(typeof(ICreateItemHandle<,>), typeof(NullCreateItemHandler<,>));
+
+            services.AddFormValidation(config => config.AddFluentValidation(typeof(Program).Assembly));
 
             services.AddBlazoredLocalStorage();
             services.AddSingleton(GetAppSettings());
@@ -47,46 +53,16 @@ namespace S3.WebUI.cBlazor.Shared.Config
             services.AddScoped<IScoresEntryTaskService, ScoresEntryTaskService>();
             services.AddScoped<IRuleService, RuleService>();
             services.AddScoped<IReportService, ReportService>();
-            //services.AddScoped<IClassSubjectScoresService, ClassSubjectScoresService>();
             services.AddScoped<IMiscellaneousService, MiscellaneousService>();
 
-            return services;
-        }
-
-        public static void AddEnvironmentConfiguration<TResource>(this IServiceCollection services, Func<EnvironmentChooser> environmentChooserFactory)
-        {
-            services.AddSingleton<IConfiguration>((s) =>
+            services.AddMatToaster(config =>
             {
-                var environementChooser = environmentChooserFactory();
-                //var uri = new Uri("test");
-                var uri = new Uri(s.GetRequiredService<NavigationManager>().Uri);
-                Assembly assembly = typeof(TResource).Assembly;
-                string environment = environementChooser.GetCurrent(uri);
-                var ressourceNames = new[]
-                {
-                    assembly.GetName().Name + ".Configuration.appsettings.json",
-                    assembly.GetName().Name + ".Configuration.appsettings." + environment + ".json"
-                };
-                
-                ConfigurationBuilder configurationBuilder = new ConfigurationBuilder();
-                configurationBuilder.AddInMemoryCollection(new Dictionary<string, string>()
-                {
-                    { "Environment", environment }       
-                });
-                
-                Console.WriteLine(string.Join(",", assembly.GetManifestResourceNames()));
-                Console.WriteLine(string.Join(",", ressourceNames));
-                foreach (var resource in ressourceNames)
-                {
-
-                    if (assembly.GetManifestResourceNames().Contains(resource))
-                    {
-                        configurationBuilder.AddJsonFile(
-                            new InMemoryFileProvider(assembly.GetManifestResourceStream(resource)), resource, false, false);
-                    }
-                }
-                return configurationBuilder.Build();
+                config.MaximumOpacity = 100;
+                config.VisibleStateDuration = 7000;
+                config.HideTransitionDuration = 1000;
             });
+
+            return services;
         }
 
         private static AppSettings GetAppSettings()

@@ -56,8 +56,8 @@
     protected override async Task OnInitializedAsync()
     {
         // Load states and countries from json files
-        states = await HttpClient.GetJsonAsync<List<string>>("json-data/states.json");
-        countries = await HttpClient.GetJsonAsync<List<string>>("json-data/countries.json");
+        states = await HttpClient.GetJSONAsync<List<string>>("json-data/states.json");
+        countries = await HttpClient.GetJSONAsync<List<string>>("json-data/countries.json");
 
         //state = Address.State;
         //country = Address.Country;
